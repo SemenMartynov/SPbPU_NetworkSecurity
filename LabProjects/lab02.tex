@@ -1,0 +1,162 @@
+\chapter*{Лабораторная работа 2. Сокеты L4}
+\addcontentsline{toc}{chapter}{Лабораторная работа 2. Сокеты L4}
+
+\textbf{Цель работы:} Создание клиент-серверных приложений, взаимодействующих друг с другом по сети на основе технологии соединения на сокетах L4.
+
+\section*{1. Анализ кода}
+\textbf{Задача:} Проанализируйте код программы \texttt{server\_game.cpp}, иллюстрирующей обмен данными с клиентскими приложениями по итеративной схеме.
+
+\textbf{Ход решения:} Используется сокет семейства \texttt{AF\_INET}. Сервер ожидает соединения на любом IP адресе (\texttt{INADDR\_ANY}), но нам достаточно для подключения \texttt{localhost}. Для соединения будет использоваться порт 1066. Игра работает в один поток.
+
+\section*{2. Компиляция и запуск}
+\textbf{Задача:} Скомпилируйте и запустите \texttt{server\_game}.
+
+\textbf{Эксперимент:} запуск сервера.
+\begin{Verbatim}[frame=single]
+    smart@thinkpad$ g++ server_game.cpp -o server_game
+    smart@thinkpad$ ./server_game 
+    start to listen
+
+\end{Verbatim}
+
+Системный журнал зафиксировал выбор слова сервером.
+\begin{Verbatim}[frame=single]
+    smart@thinkpad$ journalctl -a | grep server_game
+    Feb 08 23:43:25 thinkpad server_game[103180]: server_game chose word green
+    Feb 08 23:43:40 thinkpad server_game[103180]: server_game chose word green
+\end{Verbatim}
+
+\section*{3. Анализ состояния сокета}
+\textbf{Задача:} Запустите другой терминал и проверьте с него наличие в системе созданного сервером сокета и то, что он находится в состоянии \texttt{LISTEN}. Для этого выполните команду \texttt{netstat -a | grep 1066}.
+
+Проанализируйте вывод данной команды и объясните ее смысл.
+
+\textbf{Ход решения:} Так как команда \texttt{netstat} устарела и была заменена на \texttt{ss}, то будет рассматривать вывод \texttt{ss -atp | grep game}
+
+\textbf{Эксперимент:} результат запуска команды \texttt{ss}
+\begin{Verbatim}[frame=single]
+    smart@thinkpad$ ss -atp | grep game
+    State  Recv-Q Send-Q Local Address:Port       Peer Address:PortProcess
+    LISTEN 0      5            0.0.0.0:fpo-fns         0.0.0.0:*    users:(("server_game",pid=103180,fd=3))
+\end{Verbatim}
+
+В результате мы видим, что в данный момент сокет находится в состоянии \texttt{LISTEN}. В очереди на получение находятся 0 покетов, на отправку 5. Сервер слушает на любом адресе, но вместо номера порта мы видим \texttt{fpo-fns}. Порт 1066 зарезервирован в системе для какой-то компьютерной игры, поэтому мы видем название вместо номера. Дальше мы видим, что клиент пока не подключился. А в самом конце строки общую информацию о процессе.
+
+\section*{4. Присоединенные сокеты}
+\textbf{Задача:} Запустите в качестве клиентского процесса утилиту \texttt{telnet} с параметрами: \texttt{telnet localhost 1066}. При организации коммуникации по сети на разных компьютерах вместо \texttt{localhost} при запуске клиента указывается IP-адрес компьютера, на котором был запущен сервер.
+
+\textbf{Ход решения:} Ввиду устаревания \texttt{telnet}, воспользуемся утилитой \texttt{gnu netcat}.
+
+\textbf{Эксперимент:} Запуск клиента
+\begin{Verbatim}[frame=single]
+    smart@thinkpad$ nc localhost 1066
+    :laying on host: h
+\end{Verbatim}
+Программа запустилось, соединение установленго. Но имя хости на сервере ничем не инициализированно.
+
+\section*{5. Игра}
+\textbf{Задача:} Диалог с сервером заключается в угадывании слова. Оно вводится по буквам с клиентского терминала. При этом сервер вместо неугаданных букв выдает символы \texttt{”-”}, а также считает число оставшихся неудачных попыток (всего их предусмотрено 12).
+
+\textbf{Эксперимент:} Запуск клиента
+\begin{Verbatim}[frame=single]
+    smart@thinkpad$ nc localhost 1066
+    :laying on host: h
+    
+     -----   12
+    ф
+     -----   11
+    g
+     g----   11
+    r
+     gr---   11
+    e
+     gree-   11
+    e
+     gree-   11
+    b
+     gree-   10
+    n
+     green   10
+    
+     green   9
+\end{Verbatim}
+
+Заметно, что логика игры не доделана: победная ситуация не обрабатывается корректно.
+
+\section*{6. Состояние сокета в разные моменты}
+\textbf{Задача:} Завершите серверное приложение с помощью сигнала \texttt{kill}, и затем определите командой \texttt{netstat -a | grep 1066}, когда исчезает из системы соединение на сокетах. Во время сеанса обмена также примените команду \texttt{netstat -a | grep 1066}, чтобы исследовать состояние соединения.
+
+\textbf{Эксперимент:} Состояние сокета после завершения игры
+\begin{Verbatim}[frame=single]
+    smart@thinkpad$ ss -atp | grep game
+    State  Recv-Q Send-Q Local Address:Port       Peer Address:PortProcess
+\end{Verbatim}
+Сокет не обнаружен.
+
+Состояние сокета в процессе игры
+\begin{Verbatim}[frame=single]
+    smart@thinkpad$ ss -atp | grep game
+    State  Recv-Q Send-Q Local Address:Port       Peer Address:PortProcess
+    LISTEN 0      5            0.0.0.0:fpo-fns         0.0.0.0:*         users:(("server_game",pid=109301,fd=3))
+    ESTAB  0      0          127.0.0.1:fpo-fns       127.0.0.1:52880     users:(("server_game",pid=109301,fd=4))
+\end{Verbatim}
+Как и ожидалось, мы видим один слушающий сокет, и один установленный. При этом \texttt{127.0.0.1:fpo-fns} -- данные сервера, а \texttt{127.0.0.1:52880} -- данные клиента.
+
+\section*{7. Множество подключений}
+\textbf{Задача:} Проделайте все заново, но запускайте не одно клиентское приложение (в виде \texttt{telnet}), а несколько экземпляров с разных терминалов, и попытайтесь работать с них одновременно.
+
+Проанализируйте, как сервер будет обслуживать запросы в этом случае.
+
+\textbf{Эксперимент:} После запуска двух дополнительных клиентов, мы видим, что они находится в состоянии блокировки на операции \texttt{connect}, и не получают сообщений от сервера.
+
+\begin{Verbatim}[frame=single]
+    smart@thinkpad$ ss -atp | grep game
+    State  Recv-Q Send-Q Local Address:Port       Peer Address:PortProcess
+    LISTEN 2      5            0.0.0.0:fpo-fns         0.0.0.0:*         users:(("server_game",pid=109301,fd=3))
+    ESTAB  0      0          127.0.0.1:fpo-fns       127.0.0.1:52880     users:(("server_game",pid=109301,fd=4))
+\end{Verbatim}
+Состояние сокета показывает очередь на слушающем сокете длинной в 2.
+
+\section*{8. Исправление игры}
+\textbf{Задача:} Модифицируйте программу \texttt{server\_game.cpp} так, чтобы запросы от каждого из клиентов могли обслуживаться конкурентно, путем запуска для каждого нового соединения собственного нового процесса на сервере или потока. Проанализируйте, как обслуживаются запросы в случае конкурентной схемы работы сервера.
+
+Возможно также улучшить качество самой игровой функции \texttt{guess\_word()} сервера.
+
+\textbf{Ход решения:}
+
+Обработка подключений производится в отдельном процессе
+\lstinputlisting[language=C++, caption={Фрагмент исходного кода модифицированного файла игры}, firstline=60, lastline=64]
+{../Tasks/2_L4_Socket_sample/source_files/server_game_upd.cpp}
+
+Исправлены условия для определения победы
+\lstinputlisting[language=C++, caption={Фрагмент исходного кода модифицированного файла игры}, firstline=73, lastline=80]
+{../Tasks/2_L4_Socket_sample/source_files/server_game_upd.cpp}
+
+\textbf{Эксперимент:}
+
+Состояние сокета показывает успешную работу с тремя клиентами.
+\begin{Verbatim}[frame=single]
+    smart@thinkpad$ ss -atp | grep game
+    State  Recv-Q Send-Q Local Address:Port       Peer Address:PortProcess
+    LISTEN 0      5            0.0.0.0:fpo-fns         0.0.0.0:*           users:(("server_game",pid=113319,fd=3),("server_game",pid=113317,fd=3),("server_game",pid=113310,fd=3),("server_game",pid=113306,fd=3))
+    ESTAB  0      0          127.0.0.1:fpo-fns       127.0.0.1:52976       users:(("server_game",pid=113310,fd=4))                                                                                                
+    ESTAB  0      0          127.0.0.1:fpo-fns       127.0.0.1:52978       users:(("server_game",pid=113317,fd=4))                                                                                                
+    ESTAB  0      0          127.0.0.1:fpo-fns       127.0.0.1:56378       users:(("server_game",pid=113319,fd=4))
+\end{Verbatim}
+
+Победная ситуация успешно обрабатывается, имя хоста определяется правильно.
+\begin{Verbatim}[frame=single]
+    smart@thinkpad$ nc localhost 1066
+    Playing on host: thinkpad:
+    
+     -----   12
+    g
+     g----   12
+    r
+     gr---   12
+    e
+     gree-   12
+    n
+     green   12
+    You ween! Congrats!
+\end{Verbatim}
