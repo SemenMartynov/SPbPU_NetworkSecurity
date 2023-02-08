@@ -1,3 +1,4 @@
+% !TeX root = index.tex
 \documentclass[a4paper, 12pt]{report}		% general format
 
 %%%% Charset
@@ -21,10 +22,12 @@
 \linespread{1.3}							% line spacing
 \usepackage[left=2.5cm, right=1.5cm, top=2.5cm, bottom=2.5cm]{geometry}
 \setlength{\parindent}{0pt}					% we don't want any paragraph indentation
+\setlength{\parskip}{0.3cm}
 \renewcommand{\chaptername}{}
 
 %%%% Other
 \usepackage{hyperref}							% ver­ba­tim with URL-sen­si­tive line breaks
+\usepackage{fancyvrb}
 %\DeclareUnicodeCharacter{00A0}{~}
 \usepackage{float}
 
@@ -109,6 +112,7 @@
 
 \input{titlepage}                            % inclide the title page
 \tableofcontents
+\input{lab01}
 %\input{text}                                 % inclide the main text
 %\input{sources}                              % inclide the list of sources
 

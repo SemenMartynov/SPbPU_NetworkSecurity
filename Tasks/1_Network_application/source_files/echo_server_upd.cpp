@@ -67,11 +67,14 @@ int main(void)
       }
 
       if (!done)
+      {
+        printf("[client %i] %s",remSocket, str);
         if (send(remSocket, str, textLength, 0) < 0)
         {
           perror("send");
           done = 1;
         }
+      }
     } while (!done);
 
     close(remSocket);
