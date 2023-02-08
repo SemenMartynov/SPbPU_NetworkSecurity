@@ -57,8 +57,11 @@ int main(void)
     }
 
     printf("guess_word start");
+    if (fork() == 0)
+    { /* In child process */
+      guess_word(fd, fd);
+    }
 
-    guess_word(fd, fd);
     close(fd);
   }
 }
@@ -73,12 +76,13 @@ void guess_word(int in, int out)
   word_[2] = 'e';
   word_[3] = 'e';
   word_[4] = 'n';
+  word_[5] = '\0';
 
   char guess[MAXLEN];
   char outbuf[MAXLEN];
 
   char hostname[MAXLEN];
-  gethostbyname(hostname);
+  gethostname(hostname, MAXLEN);
   sprintf(outbuf, "Playing on host: %s:\n\n", hostname);
   write(out, outbuf, strlen(outbuf));
 
@@ -119,8 +123,11 @@ void guess_word(int in, int out)
     }
     if (!good_guess)
       lives--;
+
     if (strcmp(whole_word, part_word) == 0)
+    {
       game_state = 'W'; /* W => User Won  */
+    }
     else if (lives == 0)
     {
       game_state = 'L';              /* L => User Lost */
@@ -129,6 +136,10 @@ void guess_word(int in, int out)
     sprintf(outbuf, " %s   %d\n", part_word, lives);
     write(out, outbuf, strlen(outbuf));
   }
+  sprintf(outbuf, "You ween! Congrats!\n");
+  write(out, outbuf, strlen(outbuf));
+  close(in);
+  exit(0);
 }
 
 /*----------------------- end of guess_word() function -------------------------*/
