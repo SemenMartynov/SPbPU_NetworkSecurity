@@ -1,0 +1,164 @@
+\chapter*{Лабораторная работа 4. Импорт и экспорт ключей. Цифровая подпись}
+\addcontentsline{toc}{chapter}{Лабораторная работа 4. Импорт и экспорт ключей. Цифровая подпись}
+
+\textbf{Цель работы:} Знакомство с возможностями утилиты GNU Privacy Guard.
+
+\section*{1. Экспорт открытого ключа}
+\addcontentsline{toc}{section}{1. Экспорт открытого ключа}
+
+Экспорт открытого ключа в текстовый файл
+\begin{Verbatim}[frame=single]
+    smart@thinkpad$ gpg2 \
+     --armor \
+     --export 9DAF94FCD9CA38BFD298BD0CA0B01E0BAB2AF7C6 > mykey.asc
+\end{Verbatim}
+
+\lstinputlisting[caption={Открытый ключ mykey.asc}, numbers=none]
+{../Tasks/3_4_GnuPG_tool_utilisation/source_files/mykey.asc}
+
+\section*{2. Создание электронной цифровой подписи (ЭЦП) файла}
+\addcontentsline{toc}{section}{2. Создание электронной цифровой подписи (ЭЦП) файла}
+
+Отсоединённая ЭЦП файла \texttt{mydocument.pdf} в текстовом формате (команда требует ввода ключевой фразы)
+\begin{Verbatim}[frame=single]
+    smart@thinkpad$ gpg2 \
+     --sign \
+     --detach-sign \
+     --default-key 9DAF94FCD9CA38BFD298BD0CA0B01E0BAB2AF7C6 \
+     --armor mydocument.pdf
+\end{Verbatim}
+
+\lstinputlisting[caption={Отсоединёння цифровая подпись для файла mydocument.pdf}, numbers=none]
+{../Tasks/3_4_GnuPG_tool_utilisation/source_files/DigitalSignature/mydocument.pdf.asc}
+
+Отсоединённая подпись в двоичном формате
+
+\begin{Verbatim}[frame=single]
+    smart@thinkpad$ gpg2 \
+     --sign \
+     --detach-sign \
+     --default-key 9DAF94FCD9CA38BFD298BD0CA0B01E0BAB2AF7C6 \
+     mydocument.pdf
+\end{Verbatim}
+
+Листинг двоичного файла не имеет смысла.
+
+Встроенная в файл подпись в текстовом формате
+
+\begin{Verbatim}[frame=single]
+    smart@thinkpad$ gpg2 \
+     --sign \
+     --default-key 9DAF94FCD9CA38BFD298BD0CA0B01E0BAB2AF7C6 \
+     --armor mydocument.pdf
+\end{Verbatim}
+
+Листинг не имеет смысла, т.к. включает объёмный исходный PDF-файл.
+
+Встроенная в файл подпись в двоичном формате
+
+\begin{Verbatim}[frame=single]
+    smart@thinkpad$ gpg2 \
+     --sign \
+     --default-key 9DAF94FCD9CA38BFD298BD0CA0B01E0BAB2AF7C6 \
+     mydocument.pdf
+\end{Verbatim}
+
+Листинг не имеет смысла, т.к. сгенерирован бинарный файл.
+
+\section*{3. Импорт открытого ключа}
+\addcontentsline{toc}{section}{3. Импорт открытого ключа}
+
+Возьмём файл цифровой подписи GnuPG проекта файлового шифровальщика VeraCrypt.
+
+\begin{Verbatim}[frame=single]
+    smart@thinkpad$ wget https://www.idrix.fr/VeraCrypt/VeraCrypt_PGP_public_key.asc
+\end{Verbatim}
+
+Перед импортом, можно удостовериться, что цифровая подпись содержит правильный ID.
+\begin{Verbatim}[frame=single]
+    smart@thinkpad$ gpg --show-keys VeraCrypt_PGP_public_key.asc
+    pub   rsa4096 2018-09-11 [SC]
+        5069A233D55A0EEB174A5FC3821ACD02680D16DE
+    uid                      VeraCrypt Team (2018 - Supersedes Key ID=0x54DDD393) <veracrypt@idrix.fr>
+    sub   rsa4096 2018-09-11 [E]
+    sub   rsa4096 2018-09-11 [A]
+\end{Verbatim}
+
+После этого можно импортировать файл
+\begin{Verbatim}[frame=single]
+    smart@thinkpad$ gpg --import VeraCrypt_PGP_public_key.asc 
+    gpg: key 821ACD02680D16DE: 1 signature not checked due to a missing key
+    gpg: key 821ACD02680D16DE: public key "VeraCrypt Team (2018 - Supersedes Key ID=0x54DDD393) <veracrypt@idrix.fr>" imported
+    gpg: Total number processed: 1
+    gpg:               imported: 1
+    gpg: marginals needed: 3  completes needed: 1  trust model: pgp
+    gpg: depth: 0  valid:   1  signed:   0  trust: 0-, 0q, 0n, 0m, 0f, 1u
+    gpg: next trustdb check due at 2023-03-04
+\end{Verbatim}
+
+Для проверки подписи \underline{не обязательно} устанавливать доверительные отношения с импортированным ключом.
+
+\section*{4. Проверка ЭЦП}
+\addcontentsline{toc}{section}{4. Проверка ЭЦП}
+
+Для проверки, возьмём архив с исходными кодами и отсоединённую подпись в двоичном формате
+\begin{Verbatim}[frame=single]
+    smart@thinkpad$ wget https://launchpad.net/veracrypt/trunk/1.25.9/+download/VeraCrypt_1.25.9_Source.tar.bz2
+    smart@thinkpad$ wget https://launchpad.net/veracrypt/trunk/1.25.9/+download/VeraCrypt_1.25.9_Source.tar.bz2.sig
+\end{Verbatim}
+
+Теперь всё готово для проверки.
+\begin{Verbatim}[frame=single]
+    smart@thinkpad$ gpg --verify VeraCrypt_1.25.9_Source.tar.bz2.sig VeraCrypt_1.25.9_Source.tar.bz2
+    gpg: Signature made Sun 20 Feb 2022 04:18:32 PM MSK
+    gpg:                using RSA key 5069A233D55A0EEB174A5FC3821ACD02680D16DE
+    gpg: Good signature from "VeraCrypt Team (2018 - Supersedes Key ID=0x54DDD393) <veracrypt@idrix.fr>" [unknown]
+    gpg: WARNING: This key is not certified with a trusted signature!
+    gpg:          There is no indication that the signature belongs to the owner.
+    Primary key fingerprint: 5069 A233 D55A 0EEB 174A  5FC3 821A CD02 680D 16DE
+\end{Verbatim}
+
+Ожидаемый результат -- \texttt{Good signature}.
+
+Остальные предупреждения, связанные с отсутствием доверия, можно игнорировать.
+
+\section*{5. Экспорт/импорт на ключевые сервера}
+\addcontentsline{toc}{section}{5. Экспорт/импорт на ключевые сервера}
+
+Экспорт своего ключа
+\begin{Verbatim}[frame=single]
+    smart@thinkpad$ gpg --keyserver hkp://keyserver.ubuntu.com --send-key 9DAF94FCD9CA38BFD298BD0CA0B01E0BAB2AF7C6
+    gpg: sending key A0B01E0BAB2AF7C6 to hkp://keyserver.ubuntu.com
+\end{Verbatim}
+
+Теперь воспользуемся поиском, для обнаружения этого ключа на удалённом сервере
+\begin{Verbatim}[frame=single]
+    smart@thinkpad$ gpg --keyserver hkp://keyserver.ubuntu.com --search-keys martynov.sa@edu.spbstu.ru
+    gpg: data source: http://162.213.33.9:11371
+    (1)	Semen Martynov (Test digital sirnature) <martynov.sa@edu.spbstu.ru>
+    	  4096 bit RSA key A0B01E0BAB2AF7C6, created: 2023-02-11
+    Keys 1-1 of 1 for "martynov.sa@edu.spbstu.ru".  Enter number(s), N)ext, or Q)uit >
+
+    smart@thinkpad$ gpg --keyserver hkp://keyserver.ubuntu.com --list-sigs martynov.sa@edu.spbstu.ru
+    pub   rsa4096 2023-02-11 [SC] [expires: 2023-03-04]
+          9DAF94FCD9CA38BFD298BD0CA0B01E0BAB2AF7C6
+    uid           [ultimate] Semen Martynov (Test digital sirnature) <martynov.sa@edu.spbstu.ru>
+    sig 3        A0B01E0BAB2AF7C6 2023-02-11  Semen Martynov (Test digital sirnature) <martynov.sa@edu.spbstu.ru>
+    sub   rsa4096 2023-02-11 [E] [expires: 2023-03-04]
+    sig          A0B01E0BAB2AF7C6 2023-02-11  Semen Martynov (Test digital sirnature) <martynov.sa@edu.spbstu.ru>
+\end{Verbatim}
+
+Так же легко можно импортировать ключи с удалённого сервера
+\begin{Verbatim}[frame=single]
+    smart@thinkpad$ gpg --keyserver pgp.mit.edu --recv-keys DAD95197
+    gpg: key FBF1FC87DAD95197: public key "Ashish Aniyan <aaniyan@verimatrix.com>" imported
+    gpg: Total number processed: 1
+    gpg:               imported: 1
+\end{Verbatim}
+
+Для интеграции GPG заработал в почтовом клиенте \texttt{Mutt}, нужно в конфигурационный файл \texttt{~/.muttrc дописать}
+\begin{Verbatim}[frame=single]
+    set crypt_use_gpgme=yes
+    set crypt_autosign=yes
+    set crypt_replyencrypt=yes
+\end{Verbatim}
