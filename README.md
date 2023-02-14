@@ -7,4 +7,4 @@
 - Шифрование сообщений с помощью средств GNU Privacy Guard (ЛР3) [>>](https://github.com/SemenMartynov/SPbPU_NetworkSecurity/blob/main/LabProjects/lab03.tex)
 - Импорт и экспорт ключей. Цифровая подпись (ЛР4) [>>](https://github.com/SemenMartynov/SPbPU_NetworkSecurity/blob/main/LabProjects/lab04.tex)
 - Анализатор сетевого трафика Wireshark (ЛР5) [>>](https://github.com/SemenMartynov/SPbPU_NetworkSecurity/blob/main/LabProjects/lab05.tex)
-- Аудит защищенности сети сканером Nmap (ЛР5) [>>](https://github.com/SemenMartynov/SPbPU_NetworkSecurity/blob/main/LabProjects/lab06.tex)
+- Аудит защищенности сети сканером Nmap (ЛР6) [>>](https://github.com/SemenMartynov/SPbPU_NetworkSecurity/blob/main/LabProjects/lab06.tex)
