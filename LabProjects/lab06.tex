@@ -1,0 +1,743 @@
+\chapter*{Лабораторная работа 6. Аудит защищенности сети сканером Nmap}
+\addcontentsline{toc}{chapter}{Лабораторная работа 6. Аудит защищенности сети сканером Nmap}
+
+\textbf{Цель работы:} Знакомство с возможностями сетевого сканера Nmap.
+
+\section*{1. Установка}
+\addcontentsline{toc}{section}{1. Установка}
+
+Для использования сканера, необходимо произвести установку соответствующего пакета.
+\begin{Verbatim}[frame=single]
+    smart@thinkpad$ sudo pacman -S nmap
+    [sudo] password for smart: 
+    resolving dependencies...
+    looking for conflicting packages...
+
+    Packages (2) lua53-5.3.6-1  nmap-7.93-1
+
+    Total Download Size:    5.78 MiB
+    Total Installed Size:  25.29 MiB
+
+    :: Proceed with installation? [Y/n] 
+    :: Retrieving packages...
+     lua53-5.3.6-1-x86_64              253.2 KiB   882 KiB/s 00:00 [######################] 100%
+     nmap-7.93-1-x86_64                  5.5 MiB  4.33 MiB/s 00:01 [######################] 100%
+     Total (2/2)                         5.8 MiB  4.41 MiB/s 00:01 [######################] 100%
+    (2/2) checking keys in keyring                                 [######################] 100%
+    (2/2) checking package integrity                               [######################] 100%
+    (2/2) loading package files                                    [######################] 100%
+    (2/2) checking for file conflicts                              [######################] 100%
+    (2/2) checking available disk space                            [######################] 100%
+    :: Processing package changes...
+    (1/2) installing lua53                                         [######################] 100%
+    (2/2) installing nmap                                          [######################] 100%
+    :: Running post-transaction hooks...
+    (1/1) Arming ConditionNeedsUpdate...
+\end{Verbatim}
+
+\section*{2. Обнаружение хостов в сети}
+\addcontentsline{toc}{section}{2. Обнаружение хостов в сети}
+
+Обрнаружение хостов может стать первым шагом при исследовании сети.
+
+\subsection*{2.1. Наивное сканирование сети}
+\addcontentsline{toc}{subsection}{2.1. Наивное сканирование сети}
+
+Выполним сканирование локального сегмента сети с параметрами по умолчанию (иначе, такой вид сканирования называют "наивным").
+
+\begin{Verbatim}[frame=single]
+    smart@thinkpad$ nmap 192.168.124.0/24
+    Starting Nmap 7.93 ( https://nmap.org ) at 2023-02-13 16:02 MSK
+    Nmap scan report for 192.168.124.1
+    Host is up (0.0067s latency).
+    Not shown: 991 closed tcp ports (conn-refused)
+    PORT     STATE SERVICE
+    22/tcp   open  ssh
+    53/tcp   open  domain
+    80/tcp   open  http
+    139/tcp  open  netbios-ssn
+    222/tcp  open  rsh-spx
+    445/tcp  open  microsoft-ds
+    1900/tcp open  upnp
+    8090/tcp open  opsmessaging
+    8200/tcp open  trivnet1
+
+    Nmap scan report for 192.168.124.62
+    Host is up (0.00011s latency).
+    All 1000 scanned ports on 192.168.124.62 are in ignored states.
+    Not shown: 1000 closed tcp ports (conn-refused)
+
+    Nmap scan report for 192.168.124.85
+    Host is up (0.033s latency).
+    All 1000 scanned ports on 192.168.124.85 are in ignored states.
+    Not shown: 1000 closed tcp ports (conn-refused)
+
+    Nmap scan report for 192.168.124.96
+    Host is up (0.0044s latency).
+    Not shown: 996 closed tcp ports (conn-refused)
+    PORT     STATE SERVICE
+    1081/tcp open  pvuniwien
+    3000/tcp open  ppp
+    3001/tcp open  nessus
+    9998/tcp open  distinct32
+
+    Nmap scan report for 192.168.124.114
+    Host is up (0.018s latency).
+    All 1000 scanned ports on 192.168.124.114 are in ignored states.
+    Not shown: 1000 closed tcp ports (conn-refused)
+
+    Nmap scan report for 192.168.124.120
+    Host is up (0.0050s latency).
+    Not shown: 997 closed tcp ports (conn-refused)
+    PORT      STATE SERVICE
+    49152/tcp open  unknown
+    49155/tcp open  unknown
+    62078/tcp open  iphone-sync
+
+    Nmap scan report for 192.168.124.131
+    Host is up (0.0027s latency).
+    Not shown: 998 closed tcp ports (conn-refused)
+    PORT      STATE SERVICE
+    49152/tcp open  unknown
+    62078/tcp open  iphone-sync
+
+    Nmap done: 256 IP addresses (7 hosts up) scanned in 17.14 seconds
+\end{Verbatim}
+
+Итого, из 10 устройств, подключенных к роутеру, namp смог опередить 7.
+
+Для каждого обнаруженного хоста, Nmap пытается указывает доменное имя компьютера. Далее Nmap отображает информацию о закрытых или заблокированных портах (Not shown NNNN closed ports), а затем выводит (в три колонки) порты, имеющие другой статус. Первая колонка обозначает текущий номер порта, вторая может принимать различные значения, которые будут свидетельствовать об определенном Nmap статусе порта:
+
+\begin{itemize}
+    \item open (открытый порт) -- порт открыт, и служба принимает TCP- или UDP-соединения по этому порту (данный порт наиболее уязвим для взлома);
+    \item filtered -- порт закрыт брандмауэром, иной блокирующей программой или службой (правила роутера, аппаратный брандмауэр и т.п.);
+    \item closed -- порт закрыт, так как нет службы или иной программы, прослушивающей этот порт на компьютере;
+    \item unfiltered, open|filtered или closed|filtered -- Nmap не смог точно определить, открыт порт или закрыт и необходимо использовать сканирование другим методом.
+\end{itemize}
+
+Последняя колонка делает предполажение о рабоающем на этом порту сервисе. Допустим, если открыт порт с номером 80, Nmap полагает, что этот порт обычно применяется web-серверами (http). Но это не обязательно так -- практически любой сервис может быть запущен на любом порту, и для более точного определения нужно проводить более глубокое сканирование.
+
+\subsection*{2.2. Обнаружение компьютера методом ping}
+\addcontentsline{toc}{subsection}{2.2. Обнаружение компьютера методом ping}
+
+Самым простым является метод обнаружения работающих компьютеров с помощью ping
+\begin{Verbatim}[frame=single]
+    smart@thinkpad$ nmap -sP 192.168.124.0/24
+    Starting Nmap 7.93 ( https://nmap.org ) at 2023-02-13 16:20 MSK
+    Nmap scan report for 192.168.124.1
+    Host is up (0.0018s latency).
+    Nmap scan report for 192.168.124.62
+    Host is up (0.000064s latency).
+    Nmap scan report for 192.168.124.85
+    Host is up (0.044s latency).
+    Nmap scan report for 192.168.124.104
+    Host is up (0.13s latency).
+    Nmap scan report for 192.168.124.114
+    Host is up (0.0034s latency).
+    Nmap scan report for 192.168.124.130
+    Host is up (0.090s latency).
+    Nmap scan report for 192.168.124.131
+    Host is up (0.084s latency).
+    Nmap done: 256 IP addresses (7 hosts up) scanned in 5.73 seconds
+\end{Verbatim}
+
+Сетевой сканер Nmap посылает обычные ICMP запросы каждому IP-адресу из списка и ждет ответа. Если ответ получен, значит, сканируемый компьютер работает, что и отображается в качестве результата сканирования. Важно отметить, что удалённый компьютер не обязан отвечать на ICMP запрос, подобные правила легко задаются в фаерволе.
+
+По итогам сканирования мы видим те же 7 хостов. Сканирование было выполнено гораздо быстрее, но не даёт информацию о портах.
+
+\subsection*{2.3. Обнаружение с помощью SYN/ACK- и UDP-пакетов}
+\addcontentsline{toc}{subsection}{2.3. Обнаружение с помощью SYN/ACK- и UDP-пакетов}
+
+Для использования флага \texttt{-PU} (UDP ping) требуется root-доступ, т.к. требуется доступ к сырому ответу с канального уровня.
+
+\begin{Verbatim}[frame=single]
+    smart@thinkpad$ sudo nmap -PS80 -PU -PA -PY 192.168.124.0/24
+    [sudo] password for smart: 
+    Starting Nmap 7.93 ( https://nmap.org ) at 2023-02-13 16:27 MSK
+    Nmap scan report for 192.168.124.1
+    Host is up (0.0020s latency).
+    Not shown: 991 closed tcp ports (reset)
+    PORT     STATE SERVICE
+    22/tcp   open  ssh
+    53/tcp   open  domain
+    80/tcp   open  http
+    139/tcp  open  netbios-ssn
+    222/tcp  open  rsh-spx
+    445/tcp  open  microsoft-ds
+    1900/tcp open  upnp
+    8090/tcp open  opsmessaging
+    8200/tcp open  trivnet1
+    MAC Address: 34:CE:00:37:D9:03 (Xiaomi Electronics,co.)
+
+    Nmap scan report for 192.168.124.85
+    Host is up (0.028s latency).
+    All 1000 scanned ports on 192.168.124.85 are in ignored states.
+    Not shown: 1000 closed tcp ports (reset)
+    MAC Address: 34:CE:00:86:A0:C4 (Xiaomi Electronics,co.)
+
+    Nmap scan report for 192.168.124.104
+    Host is up (0.0047s latency).
+    All 1000 scanned ports on 192.168.124.104 are in ignored states.
+    Not shown: 1000 closed tcp ports (reset)
+    MAC Address: 34:CE:00:BD:11:0F (Xiaomi Electronics,co.)
+
+    Nmap scan report for 192.168.124.114
+    Host is up (0.0061s latency).
+    All 1000 scanned ports on 192.168.124.114 are in ignored states.
+    Not shown: 1000 closed tcp ports (reset)
+    MAC Address: 34:CE:00:86:67:69 (Xiaomi Electronics,co.)
+
+    Nmap scan report for 192.168.124.131
+    Host is up (0.0027s latency).
+    Not shown: 998 closed tcp ports (reset)
+    PORT      STATE SERVICE
+    49152/tcp open  unknown
+    62078/tcp open  iphone-sync
+    MAC Address: 2E:0E:A4:CF:16:E1 (Unknown)
+
+    Nmap scan report for 192.168.124.132
+    Host is up (0.0064s latency).
+    Not shown: 997 closed tcp ports (reset)
+    PORT      STATE SERVICE
+    49152/tcp open  unknown
+    49153/tcp open  unknown
+    62078/tcp open  iphone-sync
+    MAC Address: D6:F0:D3:73:71:73 (Unknown)
+
+    Nmap scan report for 192.168.124.62
+    Host is up (0.0000040s latency).
+    All 1000 scanned ports on 192.168.124.62 are in ignored states.
+    Not shown: 1000 closed tcp ports (reset)
+
+    Nmap done: 256 IP addresses (7 hosts up) scanned in 14.89 seconds
+\end{Verbatim}
+
+Если какой-либо сервис прослушивает порт, а Nmap пытается установить соединение с ним (отсылает пакет с флагом \texttt{SYN}), в ответ сервис может послать пакет с флагами \texttt{SYN/ACK}, что покажет: компьютер в сети существует.
+
+При отсутствии сервиса по этому порту сервер посылает в ответ пакет с флагом \texttt{RST}, что также указывает, что по заданному IP-адресу компьютер есть.
+
+Если в ответ на посланный пакет SYN от сервера ничего не пришло — это значит, что либо компьютер выключен, либо трафик блокируется брандмауэром. Чтобы обойти блокирование брандмауэром, разработан еще один метод сканирования. Сканер Nmap обычно посылает пакеты с флагами \texttt{SYN/ACK} и пакет UDP по стандартному 80-му порту, который чаще всего используется для web-трафика и поэтому очень редко блокируется брандмауэром.
+
+\begin{itemize}
+    \item \texttt{-PS} -- TCP SYN
+    \item \texttt{-PA} -- TCP ACK
+    \item \texttt{-PU} -- UDP
+    \item \texttt{-PY} -- SCTP
+\end{itemize}
+
+\subsection*{2.4. Обнаружение компьютера посредством различных ICMP-пакетов}
+\addcontentsline{toc}{subsection}{2.4. Обнаружение компьютера посредством различных ICMP-пакетов}
+
+Ранее мы использовали простой ICMP-запрос, но такой трафик может быть заблокирован. У сетевого сканера Nmap есть другие возможности определения хоста при помощи ICMP.
+
+
+\begin{Verbatim}[frame=single]
+    smart@thinkpad$ sudo nmap -PE -PP -PM 192.168.124.0/24
+    Starting Nmap 7.93 ( https://nmap.org ) at 2023-02-13 16:49 MSK
+    Nmap scan report for 192.168.124.1
+    Host is up (0.0047s latency).
+    Not shown: 991 closed tcp ports (reset)
+    PORT     STATE SERVICE
+    22/tcp   open  ssh
+    53/tcp   open  domain
+    80/tcp   open  http
+    139/tcp  open  netbios-ssn
+    222/tcp  open  rsh-spx
+    445/tcp  open  microsoft-ds
+    1900/tcp open  upnp
+    8090/tcp open  opsmessaging
+    8200/tcp open  trivnet1
+    MAC Address: 34:CE:00:37:D9:03 (Xiaomi Electronics,co.)
+
+    Nmap scan report for 192.168.124.62
+    Host is up (0.000012s latency).
+    All 1000 scanned ports on 192.168.124.62 are in ignored states.
+    Not shown: 1000 closed tcp ports (reset)
+
+    Nmap done: 256 IP addresses (2 hosts up) scanned in 3.38 seconds
+\end{Verbatim}
+
+Рассмотрим дополнительные ключи:
+\begin{itemize}
+    \item \texttt{-PE} -- ICMP echo, уже использовали ранее
+    \item \texttt{-PP} -- ICMP timestamp requests, запрос времени
+    \item \texttt{-PM} -- ICMP netmask request discovery, запрос адреса и маски
+\end{itemize}
+С помощью этих методов тоже можно получить ответ от удаленного компьютера.
+
+\section*{3. Сканирование портов}
+\addcontentsline{toc}{section}{3. Сканирование портов}
+
+Многие методы задействуют различные манипуляции с флагами TCP-пакетов на низком уровне, а потому для работы требуют полномочий root (суперпользователя) в системе.
+
+\subsection*{3.1. Сканирование портов методом SYN}
+\addcontentsline{toc}{subsection}{3.1. Сканирование портов методом SYN}
+
+Наиболее распространенный метод, который используется по умолчанию, — это сканирование TCP SYN. Этот подход позволяет сканировать несколько сотен портов в секунду, скрывая при этом сканирующий компьютер, поскольку никогда не завершает TCP-соединение.
+
+\begin{Verbatim}[frame=single]
+    smart@thinkpad$ sudo nmap -sS 192.168.124.0/24
+    Starting Nmap 7.93 ( https://nmap.org ) at 2023-02-13 17:03 MSK
+    Nmap scan report for 192.168.124.1
+    Host is up (0.0013s latency).
+    Not shown: 991 closed tcp ports (reset)
+    PORT     STATE SERVICE
+    22/tcp   open  ssh
+    53/tcp   open  domain
+    80/tcp   open  http
+    139/tcp  open  netbios-ssn
+    222/tcp  open  rsh-spx
+    445/tcp  open  microsoft-ds
+    1900/tcp open  upnp
+    8090/tcp open  opsmessaging
+    8200/tcp open  trivnet1
+    MAC Address: 34:CE:00:37:D9:03 (Xiaomi Electronics,co.)
+
+    Nmap scan report for 192.168.124.53
+    Host is up (0.039s latency).
+    All 1000 scanned ports on 192.168.124.53 are in ignored states.
+    Not shown: 1000 filtered tcp ports (no-response)
+    MAC Address: 1C:91:80:CE:C8:F4 (Apple)
+
+    Nmap scan report for 192.168.124.96
+    Host is up (0.0017s latency).
+    Not shown: 996 closed tcp ports (reset)
+    PORT     STATE SERVICE
+    1081/tcp open  pvuniwien
+    3000/tcp open  ppp
+    3001/tcp open  nessus
+    9998/tcp open  distinct32
+    MAC Address: 38:8C:50:52:42:D7 (LG Electronics)
+
+    Nmap scan report for 192.168.124.104
+    Host is up (0.034s latency).
+    All 1000 scanned ports on 192.168.124.104 are in ignored states.
+    Not shown: 1000 closed tcp ports (reset)
+    MAC Address: 34:CE:00:BD:11:0F (Xiaomi Electronics,co.)
+
+    Nmap scan report for 192.168.124.114
+    Host is up (0.044s latency).
+    All 1000 scanned ports on 192.168.124.114 are in ignored states.
+    Not shown: 1000 closed tcp ports (reset)
+    MAC Address: 34:CE:00:86:67:69 (Xiaomi Electronics,co.)
+
+    Nmap scan report for 192.168.124.120
+    Host is up (0.0055s latency).
+    Not shown: 997 closed tcp ports (reset)
+    PORT      STATE SERVICE
+    49152/tcp open  unknown
+    49155/tcp open  unknown
+    62078/tcp open  iphone-sync
+    MAC Address: 6E:63:9D:97:70:7F (Unknown)
+
+    Nmap scan report for 192.168.124.62
+    Host is up (0.0000050s latency).
+    All 1000 scanned ports on 192.168.124.62 are in ignored states.
+    Not shown: 1000 closed tcp ports (reset)
+
+    Nmap done: 256 IP addresses (7 hosts up) scanned in 40.58 seconds
+\end{Verbatim}
+
+Сканер Nmap отправляет исследуемому компьютеру пакет с флагом \texttt{SYN}, как будто он хочет открыть обычное TCP-соединение, следуя приведенным в начале статьи правилам. Если ответ (пакет с флагами \texttt{SYN/ACK}) от запрашиваемого хоста получен, порт будет обозначен как открытый, а при получении пакета с флагом \texttt{RST} -- как закрытый. В случае если сканируемый компьютер не ответил, предполагается, что этот порт фильтруется брандмауэром.
+
+\subsection*{3.2. Сканирование с использованием системной функции connect()}
+\addcontentsline{toc}{subsection}{3.2. Сканирование с использованием системной функции connect()}
+
+Метод, основанный на установлении соединения с помощью системной функции \texttt{connect()}, которую применяет большинство приложений.
+
+\begin{Verbatim}[frame=single]
+    smart@thinkpad$ nmap -sT 192.168.124.0/24
+    Starting Nmap 7.93 ( https://nmap.org ) at 2023-02-13 17:03 MSK
+    Nmap scan report for 192.168.124.1
+    Host is up (0.0076s latency).
+    Not shown: 991 closed tcp ports (conn-refused)
+    PORT     STATE SERVICE
+    22/tcp   open  ssh
+    53/tcp   open  domain
+    80/tcp   open  http
+    139/tcp  open  netbios-ssn
+    222/tcp  open  rsh-spx
+    445/tcp  open  microsoft-ds
+    1900/tcp open  upnp
+    8090/tcp open  opsmessaging
+    8200/tcp open  trivnet1
+
+    Nmap scan report for 192.168.124.62
+    Host is up (0.00014s latency).
+    All 1000 scanned ports on 192.168.124.62 are in ignored states.
+    Not shown: 1000 closed tcp ports (conn-refused)
+
+    Nmap scan report for 192.168.124.85
+    Host is up (0.034s latency).
+    All 1000 scanned ports on 192.168.124.85 are in ignored states.
+    Not shown: 1000 closed tcp ports (conn-refused)
+
+    Nmap scan report for 192.168.124.96
+    Host is up (0.0040s latency).
+    Not shown: 996 closed tcp ports (conn-refused)
+    PORT     STATE SERVICE
+    1081/tcp open  pvuniwien
+    3000/tcp open  ppp
+    3001/tcp open  nessus
+    9998/tcp open  distinct32
+
+    Nmap scan report for 192.168.124.104
+    Host is up (0.0062s latency).
+    All 1000 scanned ports on 192.168.124.104 are in ignored states.
+    Not shown: 1000 closed tcp ports (conn-refused)
+
+    Nmap scan report for 192.168.124.114
+    Host is up (0.0067s latency).
+    All 1000 scanned ports on 192.168.124.114 are in ignored states.
+    Not shown: 1000 closed tcp ports (conn-refused)
+
+    Nmap done: 256 IP addresses (6 hosts up) scanned in 26.51 seconds
+\end{Verbatim}
+
+Запрос отправляется операционной системе, которая устанавливает TCP-соединение. После определения статуса порта Nmap прерывает соединение, то есть с помощью функции \texttt{connect()} посылается пакет с флагом \texttt{RST}.
+
+Отрицательной стороной является то, что подобный способ логируется в системных журналах, раскрывая факт сканирования.
+
+\subsection*{3.3. Сканирование портов UDP-протокола}
+\addcontentsline{toc}{subsection}{3.3. Сканирование портов UDP-протокола}
+
+Наиболее распространенные сервисы, использующие UDP-протокол это DNS, SNMP и DHCP.
+
+\begin{Verbatim}[frame=single]
+    smart@thinkpad$ sudo nmap -sU -sV 192.168.124.1
+    [sudo] password for smart: 
+    Starting Nmap 7.93 ( https://nmap.org ) at 2023-02-13 17:28 MSK
+    Nmap scan report for 192.168.124.1
+    Host is up (0.0020s latency).
+    Not shown: 991 closed udp ports (port-unreach)
+    PORT     STATE         SERVICE      VERSION
+    53/udp   open          domain       ISC BIND 9.8.4-rpz2+rl005.12-P1
+    67/udp   open|filtered dhcps
+    137/udp  open          netbios-ns   Microsoft Windows netbios-ns (workgroup: WORKGROUP)
+    138/udp  open|filtered netbios-dgm
+    1900/udp open          upnp?
+    3702/udp open|filtered ws-discovery
+    5351/udp open          nat-pmp?
+    5353/udp open          mdns         DNS-based service discovery
+    5355/udp open|filtered llmnr
+    1 service unrecognized despite returning data. If you know the service/version, please submit the following fingerprint at https://nmap.org/cgi-bin/submit.cgi?new-service :
+    SF-Port5351-UDP:V=7.93%I=7%D=2/13%Time=63EA4D46%P=x86_64-pc-linux-gnu%r(DN
+    SF:SVersionBindReq,8,"\0\x86\0\x05\x003\x7fy")%r(DNSStatusRequest,C,"\0\x8
+    SF:0\0\0\x003\x7f~\xbc\xe3\*\$")%r(Help,18,"\0\xe5\0\x03\0\0\0\0\x003\x7f\
+    SF:x88\0\0\0\0\0\0\0\0\0\0\0\0")%r(SIPOptions,E8,"\0\xd0\0\x03\0\0\0\0\x00
+    SF:3\x7f\x8d\0\0\0\0\0\0\0\0\0\0\0\0Via:\x20SIP/2\.0/UDP\x20nm;branch=foo;
+    SF:rport\r\nFrom:\x20<sip:nm@nm>;tag=root\r\nTo:\x20<sip:nm2@nm2>\r\nCall-
+    SF:ID:\x2050000\r\nCSeq:\x2042\x20OPTIONS\r\nMax-Forwards:\x2070\r\nConten
+    SF:t-Length:\x200\r\nContact:\x20<sip:nm@nm>\r\nAccept:\x20application/sdp
+    SF:\r\n\r\n\0\0\0")%r(NTPRequest,30,"\x02\x80\0\x01\0\0\0\0\x003\x7f\x9a\0
+    SF:\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\xc5O#Kq\xb1R\xf3
+    SF:")%r(SNMPv3GetRequest,3C,"\x02\xba\0\x01\0\0\0\0\x003\x7f\xa4\0\0\0\0\0
+    SF:\0\0\0\0\0\0\x000\x0e\x04\0\x02\x01\0\x02\x01\0\x04\0\x04\0\x04\x000\x1
+    SF:2\x04\0\x04\0\xa0\x0c\x02\x027\xf0\x02\x01\0\x02\x01\x000\0")%r(AFSVers
+    SF:ionRequest,C,"\0\x80\0\0\x003\x7f\xae\xbc\xe3\*\$")%r(DNS-SD,C,"\0\x80\
+    SF:0\0\x003\x7f\xb3\xbc\xe3\*\$")%r(Citrix,20,"\0\x80\0\x03\0\0\0\0\x003\x
+    SF:7f\xb8\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0")%r(sybaseanywhere,40,"\
+    SF:0\x80\0\x03\0\0\0\0\x003\x7f\xc2\0\0\0\0\0\0\0\0\0\0\0\0TDS\0\0\0\x01\0
+    SF:\0\x04\0\x05\0\x05\0\0\x01\x02\0\0\x03\x01\x01\x04\x08\0\0\0\0\0\0\0\0\
+    SF:x07\x02\x04\xb1\0\0\0")%r(NetMotionMobility,8,"\0\xc0\0\x05\x003\x7f\xc
+    SF:7");
+    MAC Address: 34:CE:00:37:D9:03 (Xiaomi Electronics,co.)
+    Service Info: Host: KEENETIC; OS: Windows; CPE: cpe:/o:microsoft:windows
+
+    Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+    Nmap done: 1 IP address (1 host up) scanned in 1141.84 seconds
+\end{Verbatim}
+
+Процесс сканирования занял много времени, и в итоге был обнаружен сервис, про который Namp ничего не знает, и предлагает отправить отчёт разработчикам.
+
+Метод сканирования UDP отличается от рассмотренных методов TCP. Nmap посылает UDP-пакет с пустым заголовком по всем исследуемым портам и ждет ответа. Если в ответ он получает ICMP-пакет с ошибкой \texttt{unreachable error}, порт считается закрытым. При получении пакетов с другими ошибками Nmap считает, что порт фильтруется брандмауэром. Полученный ответный UDP-пакет свидетельствует о наличии сервиса, и порт маркируется открытым. Если ответ не получен после нескольких попыток, Nmap помечает порт как \texttt{open|filtered}, поскольку не может точно установить — открыт ли порт или брандмауэр блокирует трафик на этом порту.
+
+Рассмотрим ключи:
+\begin{itemize}
+    \item \texttt{-sU} -- Сам запуск UPD сканирования
+    \item \texttt{-sV} -- Определить версию запущенного сервиса (существенно увеличивает время сканирования)
+\end{itemize}
+
+\subsection*{3.4. Сканирование с помощью методов FIN, Xmas и Null}
+\addcontentsline{toc}{subsection}{3.4. Сканирование с помощью методов FIN, Xmas и Null}
+
+Прерывания последовательности соединения можно также получить информацию о закрытых и открытых портах исследуемого хоста.
+
+\begin{Verbatim}[frame=single]
+    smart@thinkpad$ sudo nmap -sF 192.168.124.1
+    Starting Nmap 7.93 ( https://nmap.org ) at 2023-02-13 17:26 MSK
+    Nmap scan report for 192.168.124.1
+    Host is up (0.0013s latency).
+    All 1000 scanned ports on 192.168.124.1 are in ignored states.
+    Not shown: 1000 open|filtered tcp ports (no-response)
+    MAC Address: 34:CE:00:37:D9:03 (Xiaomi Electronics,co.)
+
+    Nmap done: 1 IP address (1 host up) scanned in 21.34 seconds
+
+    smart@thinkpad$ sudo nmap -sN 192.168.124.1
+    Starting Nmap 7.93 ( https://nmap.org ) at 2023-02-13 17:26 MSK
+    Nmap scan report for 192.168.124.1
+    Host is up (0.0017s latency).
+    All 1000 scanned ports on 192.168.124.1 are in ignored states.
+    Not shown: 1000 open|filtered tcp ports (no-response)
+    MAC Address: 34:CE:00:37:D9:03 (Xiaomi Electronics,co.)
+
+    Nmap done: 1 IP address (1 host up) scanned in 21.29 seconds
+
+    smart@thinkpad$ sudo nmap -sX 192.168.124.1
+    Starting Nmap 7.93 ( https://nmap.org ) at 2023-02-13 17:27 MSK
+    Nmap scan report for 192.168.124.1
+    Host is up (0.0017s latency).
+    All 1000 scanned ports on 192.168.124.1 are in ignored states.
+    Not shown: 1000 open|filtered tcp ports (no-response)
+    MAC Address: 34:CE:00:37:D9:03 (Xiaomi Electronics,co.)
+
+    Nmap done: 1 IP address (1 host up) scanned in 21.27 seconds
+\end{Verbatim}
+
+Рассмотрим эти методы сканирования
+\begin{itemize}
+    \item \texttt{-sF} FIN-сканирование -- удаленному хосту посылаются пакеты с флагом \texttt{FIN}, которые обычно применяются при закрытии соединения. В этом случае закрытый порт компьютера, в соответствии со спецификацией протокола TCP, должен послать ответный пакет с флагом \texttt{RST}. Если же порт открыт или блокируется брандмауэром, ответа от него не будет.
+    \item \texttt{-sN} null-сканирование -- та же самая механика, но вместо пакета с \texttt{FIN}-флагом отсылается пакет с пустым заголовком (0 бит, все флаги отключены).
+    \item \texttt{-sX} Xmas-сканирование -- та же механика, но хосту отсылается пакет, раскрашенный несколькими флагами (\texttt{FIN}, \texttt{PSH} и \texttt{URG}) на манер рождественской елки.
+\end{itemize}
+
+\subsection*{3.5. Сканирование с помощью методов ACK и Window}
+\addcontentsline{toc}{subsection}{3.5. Сканирование с помощью методов ACK и Window}
+
+Для определения, какие порты на компьютере находятся в статусе \texttt{filtered}, а какие в \texttt{unfiltered}, существует отдельно вынесенный тип сканирования.
+
+\begin{Verbatim}[frame=single]
+    smart@thinkpad$ sudo nmap -sA 192.168.124.1
+    Starting Nmap 7.93 ( https://nmap.org ) at 2023-02-13 18:28 MSK
+    Nmap scan report for 192.168.124.1
+    Host is up (0.0055s latency).
+    All 1000 scanned ports on 192.168.124.1 are in ignored states.
+    Not shown: 1000 unfiltered tcp ports (reset)
+    MAC Address: 34:CE:00:37:D9:03 (Xiaomi Electronics,co.)
+    
+    Nmap done: 1 IP address (1 host up) scanned in 0.37 seconds
+\end{Verbatim}
+
+Многие фаерволы выполняют проверку только \texttt{SYN}-пакетов на определенном порту, осуществляя тем самым фильтрацию, с помощью отсылки пакетов с флагом \texttt{ACK} можно определить, существует ли на удалённом компьютере брандмауэр или нет. Пакет с флагом \texttt{ACK} в этом случае отсылается не как часть соединения, а отдельно. В случае если принимающая сторона отсылает обратный пакет с флагом \texttt{RST} (соответственно порт не блокируется брандмауэром), порт помечается как \texttt{unfiltered}, если же хост не отвечает на пакет, то на нем установлен брандмауэр и порт находится в статусе \texttt{filtered}.
+
+\begin{Verbatim}[frame=single]
+    smart@thinkpad$ sudo nmap -sW 192.168.124.1
+    Starting Nmap 7.93 ( https://nmap.org ) at 2023-02-13 18:29 MSK
+    Nmap scan report for 192.168.124.1
+    Host is up (0.0076s latency).
+    All 1000 scanned ports on 192.168.124.1 are in ignored states.
+    Not shown: 1000 closed tcp ports (reset)
+    MAC Address: 34:CE:00:37:D9:03 (Xiaomi Electronics,co.)
+
+    Nmap done: 1 IP address (1 host up) scanned in 0.39 seconds
+\end{Verbatim}
+
+Существует аналогичный метод, который работает по такому же принципу, но иначе интерпретирует полученные от хоста результаты. Сканирование методом \texttt{TCP Window} предполагает, что на некоторых хостах службы используют положительное значение поля \texttt{window} в ответном пакете (не ноль). Поэтому с помощью данного метода Nmap анализирует заголовки приходящих пакетов с флагом \texttt{RST}, и если приходящий пакет содержит положительное значение поля, то Nmap помечает этот порт открытым. Получение пакета с нулевым значением поля означает, что порт закрыт.
+
+В нашем случае фаервол на удалённом хосте не обнаружен.
+
+\subsection*{3.6. Сканирование методом Maimon}
+\addcontentsline{toc}{subsection}{3.6. Сканирование методом Maimon}
+
+Способ сканирования был предложен специалистом, по имени Uriel Maimon.
+
+Механика метода сходна с \texttt{FIN}, \texttt{Xmas} и \texttt{Null}, но отправляются пакеты с флагами \texttt{FIN/ACK}. Если порт закрыт, хост должен отвечать пакетом \texttt{RST}.
+
+\begin{Verbatim}[frame=single]
+    smart@thinkpad$ sudo nmap -sM 192.168.124.1
+    Starting Nmap 7.93 ( https://nmap.org ) at 2023-02-13 18:48 MSK
+    Nmap scan report for 192.168.124.1
+    Host is up (0.0016s latency).
+    Not shown: 998 open|filtered tcp ports (no-response)
+    PORT    STATE  SERVICE
+    139/tcp closed netbios-ssn
+    445/tcp closed microsoft-ds
+    MAC Address: 34:CE:00:37:D9:03 (Xiaomi Electronics,co.)
+
+    Nmap done: 1 IP address (1 host up) scanned in 4.65 seconds
+\end{Verbatim}
+
+\subsection*{3.7. Скрытое сканирование с использованием алгоритма idlescan}
+\addcontentsline{toc}{subsection}{3.7. Скрытое сканирование с использованием алгоритма idlescan}
+
+Метод idlescan по своему алгоритму работы практически идентичен SYN-сканированию, но пытается скрыть IP-адрес хоста, с которого производится исследование.
+
+Попытка просканировать хост 192.168.124.1 выдавая себя за хост 192.168.124.96.
+\begin{Verbatim}[frame=single]
+    smart@thinkpad$ sudo nmap -sI 192.168.124.96 192.168.124.1
+    WARNING: Many people use -Pn w/Idlescan to prevent pings from their true IP.  On the other hand, timing info Nmap gains from pings can allow for faster, more reliable scans.
+    Starting Nmap 7.93 ( https://nmap.org ) at 2023-02-13 18:56 MSK
+    Idle scan using zombie 192.168.124.96 (192.168.124.96:443); Class: Incremental
+    Idle scan is unable to obtain meaningful results from proxy 192.168.124.96 (192.168.124.96).  I'm sorry it didn't work out.
+    QUITTING!
+\end{Verbatim}
+
+Результаты такого сканирования часто бывают не точны, при этом требуют довольно много времени. В нашем случае никакие полезные результаты получить не удалось.
+
+\subsection*{3.8. Сканирование на наличие открытых протоколов}
+\addcontentsline{toc}{subsection}{3.8. Сканирование на наличие открытых протоколов}
+
+Иногда достаточно просто определить сам факт наличия открытого порта на удалённом хосте.
+
+Для определения доступности протокола на хосте Nmap посылает несколько пакетов с пустыми заголовками, содержащими в поле protocol только номер протокола. В случае, если протокол недоступен, компьютер вернет ICMP-сообщение «protocol unreachable». Если в ответ хост не посылает пакетов -- это может означать, что либо протокол доступен, либо брандмауэр блокирует ICMP-трафик.
+
+\begin{Verbatim}[frame=single]
+    smart@thinkpad$ sudo nmap -sO 192.168.124.1
+    Starting Nmap 7.93 ( https://nmap.org ) at 2023-02-13 18:58 MSK
+    Nmap scan report for 192.168.124.1
+    Host is up (0.0029s latency).
+    Not shown: 245 closed n/a protocols (proto-unreach)
+    PROTOCOL STATE         SERVICE
+    1        open          icmp
+    2        open|filtered igmp
+    4        open|filtered ipv4
+    6        open          tcp
+    17       open          udp
+    41       open|filtered ipv6
+    47       open|filtered gre
+    50       open|filtered esp
+    51       open|filtered ah
+    108      open|filtered ipcomp
+    136      open|filtered udplite
+    MAC Address: 34:CE:00:37:D9:03 (Xiaomi Electronics,co.)
+
+    Nmap done: 1 IP address (1 host up) scanned in 322.60 seconds
+\end{Verbatim}
+
+\subsection*{3.9. Скрытное сканирование посредством метода ftp bounce}
+\addcontentsline{toc}{subsection}{3.9. Скрытное сканирование посредством метода ftp bounce}
+
+Метод основан на возможности FTP-сервера отправлять файлы 3й стороне. Зная об этой уязвимости, многие владельцы FTP-серверов закрыли эту возможность.
+
+В нашей сети нет FTP-сервера, но мы просто упоминаем эту возможность как опцию для сканирования.
+
+\begin{Verbatim}[frame=single]
+    smart@thinkpad$ sudo nmap -b <username:password@server:port> 192.168.124.1
+\end{Verbatim}
+
+\section*{4. Изучение служб на удалёных хостах}
+\addcontentsline{toc}{section}{4. Изучение служб на удалёных хостах}
+
+Nmap с большой степенью вероятности позволяет определять версию операционной системы, которая запущена на удаленном компьютере. При этом Nmap может также идентифицировать версии запущенных на удаленном ПК сервисов, при условии что порты того или иного сервиса открыты.
+
+\subsection*{4.1. Определение версии ОС}
+\addcontentsline{toc}{subsection}{4.1. Определение версии ОС}
+
+Сканер Nmap собирает "отпечатки пальцев" (fingerprints) различных хостов и запущенных там сервисов. Сравнивая полученные результаты с эталонными значениями, указанными в файле Nmap-os-fingerprints, программа выдает сводный результат по компьютеру.
+
+\begin{Verbatim}[frame=single]
+    smart@thinkpad$ sudo nmap -O -A 192.168.124.96
+    Starting Nmap 7.93 ( https://nmap.org ) at 2023-02-13 19:24 MSK
+    Nmap scan report for 192.168.124.96
+    Host is up (0.0020s latency).
+    Not shown: 996 closed tcp ports (reset)
+    Bug in uptime-agent-info: no string output.
+    PORT     STATE SERVICE  VERSION
+    1081/tcp open  upnp     Platinum unpnd 1.0.4.9 (arch: i686; UPnP 1.0; DLNADOC 1.50)
+    3000/tcp open  http     LG smart TV http service
+    |_http-title: Site doesn't have a title.
+    3001/tcp open  ssl/http LG smart TV http service
+    | tls-nextprotoneg: 
+    |   http/1.1
+    |_  http/1.0
+    |_http-title: Site doesn't have a title.
+    |_ssl-date: TLS randomness does not represent time
+    | ssl-cert: Subject: commonName=LG_TV_1ba52211ee27c01/organizationName=LG Electronics U.S.A, Inc./stateOrProvinceName=New Jersey/countryName=US
+    | Not valid before: 2018-11-11T07:30:39
+    |_Not valid after:  2038-11-06T07:30:39
+    9998/tcp open  http     Google Chromecast httpd
+    |_http-title: Cast shell remote debugging
+    MAC Address: 38:8C:50:52:42:D7 (LG Electronics)
+    Device type: general purpose
+    Running: Linux 3.X|4.X
+    OS CPE: cpe:/o:linux:linux_kernel:3 cpe:/o:linux:linux_kernel:4
+    OS details: Linux 3.2 - 4.9
+    Network Distance: 1 hop
+    Service Info: OS: Linux; Device: media device; CPE: cpe:/o:linux:linux_kernel
+
+    TRACEROUTE
+    HOP RTT     ADDRESS
+    1   2.02 ms 192.168.124.96
+
+    OS and Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+    Nmap done: 1 IP address (1 host up) scanned in 108.58 seconds
+\end{Verbatim}
+
+\begin{Verbatim}[frame=single]
+    smart@thinkpad$ sudo nmap -A -O 192.168.124.132
+    Starting Nmap 7.93 ( https://nmap.org ) at 2023-02-13 19:25 MSK
+    Nmap scan report for 192.168.124.132
+    Host is up (0.016s latency).
+    Not shown: 997 closed tcp ports (reset)
+    PORT      STATE SERVICE      VERSION
+    49152/tcp open  unknown
+    49153/tcp open  unknown
+    62078/tcp open  iphone-sync?
+    MAC Address: D6:F0:D3:73:71:73 (Unknown)
+    No exact OS matches for host (If you know what OS is running on it, see https://nmap.org/submit/ ).
+    TCP/IP fingerprint:
+    OS:SCAN(V=7.93%E=4%D=2/13%OT=49152%CT=1%CU=40622%PV=Y%DS=1%DC=D%G=Y%M=D6F0D
+    OS:3%TM=63EA6542%P=x86_64-pc-linux-gnu)SEQ(SP=105%GCD=1%ISR=10F%TI=Z%CI=RD%
+    OS:II=RI%TS=21)SEQ(SP=104%GCD=1%ISR=10D%TI=Z%CI=RD%TS=21)OPS(O1=M5B4NW6NNT1
+    OS:1SLL%O2=M5B4NW6NNT11SLL%O3=M5B4NW6NNT11%O4=M5B4NW6NNT11SLL%O5=M5B4NW6NNT
+    OS:11SLL%O6=M5B4NNT11SLL)WIN(W1=FFFF%W2=FFFF%W3=FFFF%W4=FFFF%W5=FFFF%W6=FFF
+    OS:F)ECN(R=Y%DF=Y%T=40%W=FFFF%O=M5B4NW6SLL%CC=N%Q=)T1(R=Y%DF=Y%T=40%S=O%A=S
+    OS:+%F=AS%RD=0%Q=)T2(R=N)T3(R=N)T4(R=Y%DF=Y%T=40%W=0%S=A%A=Z%F=R%O=%RD=0%Q=
+    OS:)T5(R=Y%DF=N%T=40%W=0%S=Z%A=S+%F=AR%O=%RD=0%Q=)T6(R=Y%DF=Y%T=40%W=0%S=A%
+    OS:A=Z%F=R%O=%RD=0%Q=)T7(R=Y%DF=N%T=40%W=0%S=Z%A=S%F=AR%O=%RD=0%Q=)U1(R=Y%D
+    OS:F=N%T=40%IPL=38%UN=0%RIPL=G%RID=G%RIPCK=G%RUCK=0%RUD=G)IE(R=Y%DFI=S%T=40
+    OS:%CD=S)
+
+    Network Distance: 1 hop
+
+    TRACEROUTE
+    HOP RTT      ADDRESS
+    1   15.64 ms 192.168.124.132
+
+    OS and Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+    Nmap done: 1 IP address (1 host up) scanned in 197.01 seconds
+\end{Verbatim}
+
+\section*{5. Параметры сканирования по расписанию}
+\addcontentsline{toc}{section}{5. Параметры сканирования по расписанию}
+
+Nmap позволяет задать расписание сканирования, чтобы попытаться скрыть свое присутствие от брандмауэров и систем безопасности.
+
+Существует шесть расписаний сканирования:
+\begin{itemize}
+    \item \texttt{Paranoid} -- с паузой в 5 минут производится тестирование хоста без ограничений на общее тестирование 5 минут таймат на ответ.
+    \item \texttt{Sneaky} -- 15 секунд меджу хостами, без ограничения на один хост и 15 секунд таймаунт на ответ.
+    \item \texttt{Polite} -- 0,4 секунды между хостами, без ограничений на каждый хост и 6 секунд таймат на ответ.
+    \item \texttt{Normal} (используется по умолчанию) -- без пауз между хостами и 6 секунд таймаут на запрос.
+    \item \texttt{Insane} -- без ограничений меджу хостами, 75 секунд на весь хост и 0,3 секунды на каждый запрос. При этом запросы могут параллелиться.
+\end{itemize}
+
+Результаты сканирования могут быть записаны в журнал. Типы записи различаются по методу сохранения информации.
+\begin{itemize}
+    \item \texttt{-oN} осуществляет запись после появления информации на экране
+    \item \texttt{-oA} запись сразу всеми возможными форматами в файлы с названием file и различными расширениями (*.xml, *.gNmap, *.Nmap)
+\end{itemize}
+
+\section*{6. Сравните возможности Nmap с другими средствами аудита сети}
+\addcontentsline{toc}{section}{6. Сравните возможности Nmap с другими средствами аудита сети}
+
+Сравнивать Nmap c Netcat или ping не корректно, т.к. это инструменты совершенно разных категорий. В известном смысле, Netcat включает в себя и ping и netcat.
+
+Альтернативами для Nmap могут быть такие пакеты, как
+\begin{itemize}
+    \item Rapid7 Nexpose -- сканер уязвимостей, который выполняет активное сканирование IT-инфраструктуры на наличие ошибочных конфигураций, дыр, вредоносных кодов, и предоставляет рекомендации по их устранению. Под анализ попадают все компоненты инфраструктуры, включая сети, операционные системы, базы данных и web-приложения. По результатам проверки Rapid7 Nexpose в режиме приоритетов классифицирует обнаруженные угрозы и генерирует отчеты по их устранению. \url{www.rapid7.com}
+
+    \item Tenable Nessus Scanner -- сканер, предназначенный для оценки текущего состояния защищённости традиционной ИТ-инфраструктуры, мобильных и облачных сред, контейнеров и т.д. По результатам сканирования выдаёт отчёт о найденных уязвимостях. Рекомендуется использовать, как составную часть Nessus Security Center. \url{www.tenable.com/products/nessus/nessus-professional}
+    
+    \item OpenVAS -- сканер уязвимостей с открытым исходным кодом. OpenVAS предназначен для активного мониторинга узлов вычислительной сети на предмет наличия проблем, связанных с безопасностью, оценки серьезности этих проблем и для контроля их устранения. Активный мониторинг означает, что OpenVAS выполняет какие-то действия с узлом сети: сканирует открытые порты, посылает специальным образом сформированные пакеты для имитации атаки или даже авторизуется на узле, получает доступ к консоли управления, и выполняет на нем команды. Затем OpenVAS анализирует собранные данные и делает выводы о наличии каких-либо проблем с безопасностью. Эти проблемы, в большинстве случаев касаются установленного на узле необновленного ПО, в котором имеются известные и описанные уязвимости, или же небезопасно настроенного ПО. \url{www.openvas.org}
+\end{itemize}
+
+Дальнейшее сравнение целесообразно проводить при наличии критериев сравнения, которые можно было бы выделить из постановки задачи (хотим ли мы наземно анализировать чужую сеть в рамках пинтеста, хотим ли мы отслеживать актуальность ПО в своей сети, либо что-то ещё).
+
+\section*{Выводы}
+\addcontentsline{toc}{section}{Выводы}
+
+Виды сканирования различаются по скорости и полноте исследования. Комбинируя их, можно получить максимальное представление о сети, её хостах и работающих на этих хостах сервисах.
+
+В процессе исследования легче всего поддавались изучению хосты на базе linux, хуже всего -- устройства от Apple. Возможно это связано с тем, что в базе данных отпечатков не было данных для новых устройств.
