@@ -10,3 +10,4 @@
 - Аудит защищенности сети сканером Nmap (ЛР6) [>>](https://github.com/SemenMartynov/SPbPU_NetworkSecurity/blob/main/LabProjects/lab06.tex)
 - Утилиты Netcat и Cryptcat (ЛР7) [>>](https://github.com/SemenMartynov/SPbPU_NetworkSecurity/blob/main/LabProjects/lab07.tex)
 - Сетевое экранирование. Применение правил iptables (ЛР8) [>>](https://github.com/SemenMartynov/SPbPU_NetworkSecurity/blob/main/LabProjects/lab08.tex)
+- Сетевое экранирование. Работа с iptables (ЛР9) [>>](https://github.com/SemenMartynov/SPbPU_NetworkSecurity/blob/main/LabProjects/lab09.tex)
