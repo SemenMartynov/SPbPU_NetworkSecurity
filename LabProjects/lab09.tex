@@ -1,0 +1,429 @@
+\chapter*{Лабораторная работа 9. Сетевое экранирование. Работа с iptables}
+\addcontentsline{toc}{chapter}{Лабораторная работа 9. Сетевое экранирование. Работа с iptables}
+
+\textbf{Цель работы:} 
+
+\section*{1. Предусловия}
+\addcontentsline{toc}{section}{1. Предусловия}
+
+Удалённый сервер с чистыми цепочками iptables
+\begin{Verbatim}[frame=single]
+    user@ubuntu$ sudo iptables --list --numeric --verbose --line-numbers
+    Chain INPUT (policy ACCEPT 0 packets, 0 bytes)
+    num   pkts bytes target     prot opt in   out   source    destination
+
+    Chain FORWARD (policy ACCEPT 0 packets, 0 bytes)
+    num   pkts bytes target     prot opt in   out   source    destination
+
+    Chain OUTPUT (policy ACCEPT 0 packets, 0 bytes)
+    num   pkts bytes target     prot opt in   out   source    destination
+\end{Verbatim}
+
+
+\section*{2. Запрет ICMP ping запросов извне}
+\addcontentsline{toc}{section}{2. Запрет ICMP ping запросов извне}
+
+Запретим удалённому хости принимать ICMP ping запросы:\\
+\texttt{sudo iptables --append INPUT --protocol icmp --icmp-type echo-request --jump DROP}
+
+Состояние iptables цепочек после выполнение предыдущей команды
+\begin{Verbatim}[frame=single]
+    user@ubuntu$ sudo iptables --list --numeric --verbose --line-numbers
+    num   pkts bytes target     prot opt in   out   source    destination
+    1        6   504 DROP       icmp --  *    *     0.0.0.0/0 0.0.0.0/0    icmptype 8
+    
+
+    Chain FORWARD (policy ACCEPT 0 packets, 0 bytes)
+    num   pkts bytes target     prot opt in   out   source    destination
+
+    Chain OUTPUT (policy ACCEPT 0 packets, 0 bytes)
+    num   pkts bytes target     prot opt in   out   source    destination
+\end{Verbatim}
+
+Запрос извне
+\begin{Verbatim}[frame=single]
+    smart@thinkpad$ ping 192.168.124.45
+    PING 192.168.124.45 (192.168.124.45) 56(84) bytes of data.
+    ^C
+    --- 192.168.124.45 ping statistics ---
+    100 packets transmitted, 0 received, 100% packet loss, time 100325ms
+\end{Verbatim}
+
+Локальный запрос так же отсеян, т.к. запросы обрабатываются общей цепочкой
+\begin{Verbatim}[frame=single]
+    user@ubuntu$ ping localhost 
+    PING localhost (127.0.0.1) 56(84) bytes of data.
+    ^C
+    --- localhost ping statistics ---
+    10 packets transmitted, 0 received, 100% packet loss, time 9940ms
+\end{Verbatim}
+
+Исправить эту ситуацию можно, допустим, такой командой.\\
+\texttt{sudo iptables --insert INPUT --in-interface lo --jump ACCEPT}
+
+Состояние правил
+\begin{Verbatim}[frame=single]
+    user@ubuntu$ sudo iptables --list --numeric --verbose --line-numbers
+    Chain INPUT (policy ACCEPT 0 packets, 0 bytes)
+    num   pkts bytes target   prot opt in   out  source     destination
+    1       18  1512 ACCEPT   all  --  lo   *    0.0.0.0/0  0.0.0.0/0   
+    2       33  2772 DROP     icmp --  *    *    0.0.0.0/0  0.0.0.0/0    icmptype 8
+
+    Chain FORWARD (policy ACCEPT 0 packets, 0 bytes)
+    num   pkts bytes target   prot opt in   out  source     destination
+
+    Chain OUTPUT (policy ACCEPT 0 packets, 0 bytes)
+    num   pkts bytes target   prot opt in   out  source     destination
+\end{Verbatim}
+
+Важно отметить, что разрешение для localhost было добавлено перед запрещающим правилом.
+
+После этого локальный запрос начинает работать
+\begin{Verbatim}[frame=single]
+    user@ubuntu$ ping localhost 
+    PING localhost (127.0.0.1) 56(84) bytes of data.
+    ^C
+    --- localhost ping statistics ---
+    10 packets transmitted, 0 received, 100% packet loss, time 9940ms
+\end{Verbatim}
+
+\section*{3. Разрешение ICMP запросов}
+\addcontentsline{toc}{section}{3. Ограничение количества запросов}
+
+В этом сценарии, политикой по умолчанию для \texttt{INPUT} и \texttt{OUTPUT} цепочек будет \texttt{DROP}:
+
+\texttt{sudo iptables --policy INPUT DROP}
+
+\texttt{sudo iptables --policy OUTPUT DROP}
+
+В таком случа, потребуется явно разрешить как получение запросов, так и ответ на них:
+
+\texttt{sudo iptables --insert INPUT --in-interface enp0s3 --protocol icmp --icmp-type 8 --source 0/0 --destination 192.168.124.45 --match state --state NEW,ESTABLISHED,RELATED --jump ACCEPT}
+
+\texttt{sudo iptables --insert OUTPUT --protocol icmp --icmp-type 0 --source 192.168.124.45 --destination 0/0 --match state --state ESTABLISHED,RELATED --jump ACCEPT}
+
+Состояние цепочек правил
+\begin{Verbatim}[frame=single]
+    user@ubuntu$ sudo iptables --list --numeric --verbose --line-numbers
+    Chain INPUT (policy DROP 74 packets, 19555 bytes)
+    num   pkts bytes target   prot opt in   out   source           destination
+    1        0     0 ACCEPT   icmp --  enp0s3 *   0.0.0.0/0        192.168.124.45   icmptype 8 state NEW,RELATED,ESTABLISHED
+    
+    Chain FORWARD (policy ACCEPT 0 packets, 0 bytes)
+    num   pkts bytes target   prot opt in   out   source           destination
+    
+    Chain OUTPUT (policy DROP 0 packets, 0 bytes)
+    num   pkts bytes target   prot opt in   out   source           destination
+    1        0     0 ACCEPT   icmp --  *    *     192.168.124.45   0.0.0.0/0        icmptype 0 state RELATED,ESTABLISHED
+\end{Verbatim}
+
+В результате, хост отвечает на ping
+\begin{Verbatim}[frame=single]
+    smart@thinkpad$ ping 192.168.124.45
+    PING 192.168.124.45 (192.168.124.45) 56(84) bytes of data.
+    64 bytes from 192.168.124.45: icmp_seq=1 ttl=64 time=0.197 ms
+    64 bytes from 192.168.124.45: icmp_seq=2 ttl=64 time=0.149 ms
+    64 bytes from 192.168.124.45: icmp_seq=3 ttl=64 time=0.265 ms
+    64 bytes from 192.168.124.45: icmp_seq=4 ttl=64 time=0.233 ms
+    64 bytes from 192.168.124.45: icmp_seq=5 ttl=64 time=0.178 ms
+    64 bytes from 192.168.124.45: icmp_seq=6 ttl=64 time=0.216 ms
+    64 bytes from 192.168.124.45: icmp_seq=7 ttl=64 time=0.268 ms
+    ^C
+    --- 192.168.124.45 ping statistics ---
+    7 packets transmitted, 7 received, 0% packet loss, time 6091ms
+    rtt min/avg/max/mdev = 0.149/0.215/0.268/0.040 ms
+\end{Verbatim}
+
+\section*{4. Ограничение количества запросов}
+\addcontentsline{toc}{section}{4. Ограничение количества запросов}
+
+Попробуем ограничить число ICMP запросов -- 1 запрос в секунду:
+
+\texttt{sudo iptables --append INPUT --protocol icmp --match icmp --icmp-type 8 --match limit --limit 3/minute --limit-burst 5 --jump ACCEPT}
+
+Очередь будет разгружаться каждые 20 секунд.
+
+Политикой по умолчанию для \texttt{INPUT} будет \texttt{DROP}:
+
+\texttt{sudo iptables --policy INPUT DROP}
+
+Состояние цепочек правил
+\begin{Verbatim}[frame=single]
+    user@ubuntu$ sudo iptables --list --numeric --verbose --line-numbers
+    Chain INPUT (policy DROP 0 packets, 0 bytes)
+    num   pkts bytes target     prot opt in     out   source       destination
+    1        0     0 ACCEPT     icmp --  *      *     0.0.0.0/0    0.0.0.0/0    icmptype 8 limit: avg 3/min burst 5
+
+    Chain FORWARD (policy ACCEPT 0 packets, 0 bytes)
+    num   pkts bytes target     prot opt in     out   source       destination
+    Chain OUTPUT (policy ACCEPT 0 packets, 0 bytes)
+    num   pkts bytes target     prot opt in     out   source       destination
+\end{Verbatim}
+
+Клиент отправляет запросы каждую 1/10 секунды, в итоге много потерь.
+\begin{Verbatim}[frame=single]
+    smart@thinkpad$ ping 192.168.124.45 -i 0.1
+    PING 192.168.124.45 (192.168.124.45) 56(84) bytes of data.
+    64 bytes from 192.168.124.45: icmp_seq=84 ttl=64 time=0.194 ms
+    64 bytes from 192.168.124.45: icmp_seq=270 ttl=64 time=0.268 ms
+    64 bytes from 192.168.124.45: icmp_seq=456 ttl=64 time=0.268 ms
+    64 bytes from 192.168.124.45: icmp_seq=642 ttl=64 time=0.257 ms
+    ^C
+    --- 192.168.124.45 ping statistics ---
+    775 packets transmitted, 4 received, 99.4839% packet loss, time 83204ms
+    rtt min/avg/max/mdev = 0.194/0.246/0.268/0.030 ms
+\end{Verbatim}
+
+\section*{5. Блокировка входящих запросов}
+\addcontentsline{toc}{section}{5. Блокировка входящих запросов}
+
+Проверим параметры блокировки входящих запросов.
+
+\subsection*{5.1 Блокировка по адресу}
+\addcontentsline{toc}{subsection}{5.1 Блокировка по адресу}
+
+Заблокируем все входящие запросы с определенного адреса (например, 192.168.124.62):
+
+\texttt{sudo iptables --append INPUT --source 192.168.124.62 --jump DROP}
+
+Состояние цепочек правил
+\begin{Verbatim}[frame=single]
+    user@ubuntu$ sudo iptables --list --numeric --verbose --line-numbers
+    Chain INPUT (policy ACCEPT 1229 packets, 231K bytes)
+    num   pkts bytes target     prot opt in   out  source           destination
+    1        4   336 DROP       all  --  *    *    192.168.124.62   0.0.0.0/0
+    
+    Chain FORWARD (policy ACCEPT 0 packets, 0 bytes)
+    num   pkts bytes target     prot opt in   out  source           destination
+    
+    Chain OUTPUT (policy ACCEPT 0 packets, 0 bytes)
+    num   pkts bytes target     prot opt in   out  source           destination
+\end{Verbatim}
+
+Ping с \texttt{192.168.124.62} на \texttt{192.168.124.45} не проходит.
+\begin{Verbatim}[frame=single]
+    smart@thinkpad$ ping 192.168.124.45 -i 0.1
+    PING 192.168.124.45 (192.168.124.45) 56(84) bytes of data.
+    64 bytes from 192.168.124.45: icmp_seq=84 ttl=64 time=0.194 ms
+    64 bytes from 192.168.124.45: icmp_seq=270 ttl=64 time=0.268 ms
+    64 bytes from 192.168.124.45: icmp_seq=456 ttl=64 time=0.268 ms
+    64 bytes from 192.168.124.45: icmp_seq=642 ttl=64 time=0.257 ms
+    ^C
+    --- 192.168.124.45 ping statistics ---
+    775 packets transmitted, 4 received, 99.4839% packet loss, time 83204ms
+    rtt min/avg/max/mdev = 0.194/0.246/0.268/0.030 ms
+\end{Verbatim}
+
+\subsection*{5.2 Блокировка по порту}
+\addcontentsline{toc}{subsection}{5.2 Блокировка по порту}
+
+Заблокируем все входящие запросы с определенного адреса (например, 192.168.124.62):
+
+\texttt{sudo iptables --append INPUT --protocol tcp --dport 80 --jump DROP}
+
+Состояние цепочек правил
+\begin{Verbatim}[frame=single]
+    user@ubuntu$ sudo iptables --list --numeric --verbose --line-numbers
+    Chain INPUT (policy ACCEPT 0 packets, 0 bytes)
+    num   pkts bytes target     prot opt in   out   source      destination
+    1        0     0 DROP       tcp  --  *    *     0.0.0.0/0   0.0.0.0/0    tcp dpt:80
+    
+    Chain FORWARD (policy ACCEPT 0 packets, 0 bytes)
+    num   pkts bytes target     prot opt in   out   source      destination
+    
+    Chain OUTPUT (policy ACCEPT 0 packets, 0 bytes)
+    num   pkts bytes target     prot opt in   out   source      destination
+\end{Verbatim}
+
+На сервере запускаем Netcat на 80-ом порту.
+\begin{Verbatim}[frame=single]
+    user@ubuntu$ sudo nc -l 80
+\end{Verbatim}
+
+С клиента проходит ping
+\begin{Verbatim}[frame=single]
+    smart@thinkpad$ ping 192.168.124.45
+    PING 192.168.124.45 (192.168.124.45) 56(84) bytes of data.
+    64 bytes from 192.168.124.45: icmp_seq=1 ttl=64 time=0.214 ms
+    64 bytes from 192.168.124.45: icmp_seq=2 ttl=64 time=0.227 ms
+    64 bytes from 192.168.124.45: icmp_seq=3 ttl=64 time=0.252 ms
+    64 bytes from 192.168.124.45: icmp_seq=4 ttl=64 time=0.224 ms
+    ^C
+    --- 192.168.124.45 ping statistics ---
+    4 packets transmitted, 4 received, 0% packet loss, time 3041ms
+    rtt min/avg/max/mdev = 0.214/0.229/0.252/0.014 ms
+\end{Verbatim}
+
+Но подключиться на 80-й порт не получится
+\begin{Verbatim}[frame=single]
+    smart@thinkpad$ nc 192.168.124.45 80
+\end{Verbatim}
+
+А на стороне сервера увеличивается чисто пакетов, попавших под правило о блокировке.
+
+\subsection*{5.3 Блокировка по адресу и порту}
+\addcontentsline{toc}{subsection}{5.3 Блокировка по адресу и порту}
+
+\texttt{sudo iptables --append INPUT --protocol tcp --source 192.168.124.62 --dport 80 --jump DROP}
+
+Демонстрация смысла не имеет, т.к. наблюдаемое поведение аналогично предыдущему примеру.
+
+\subsection*{5.4 Блокировка по MAC адресу}
+\addcontentsline{toc}{subsection}{5.4 Блокировка по MAC адресу}
+
+\texttt{sudo iptables --append INPUT --match mac --mac-source 00:0F:EA:91:04:08 --jump DROP}
+
+Демонстрация смысла не имеет, т.к. наблюдаемое поведение аналогично предыдущему примеру.
+
+\section*{6. Разрешение соединений только для протокола TCP}
+\addcontentsline{toc}{section}{6. Разрешение соединений только для протокола TCP}
+
+Политикой по умолчанию для \texttt{INPUT} будет \texttt{DROP}:
+
+\texttt{sudo iptables --policy INPUT DROP}
+
+Команда, которая разрешит SSH соединения с указанного MAC-адреса:
+
+\texttt{sudo iptables --append INPUT  --protocol tcp --destination-port 22 --match mac --mac-source 00:0F:EA:91:04:08 --j ACCEPT}
+
+Состояние цепочек правил
+\begin{Verbatim}[frame=single]
+    user@ubuntu$ sudo iptables --list --numeric --verbose --line-numbers
+    Chain INPUT (policy DROP 2 packets, 208 bytes)
+    num   pkts bytes target     prot opt in     out  source      destination
+    1        0     0 ACCEPT     tcp  --  *      *    0.0.0.0/0   0.0.0.0/0      tcp dpt:22 MAC00:0f:ea:91:04:08
+
+    Chain FORWARD (policy ACCEPT 0 packets, 0 bytes)
+    num   pkts bytes target     prot opt in     out  source      destination
+
+    Chain OUTPUT (policy ACCEPT 0 packets, 0 bytes)
+    num   pkts bytes target     prot opt in     out  source      destination 
+\end{Verbatim}
+
+Ping с клиента не проходит
+\begin{Verbatim}[frame=single]
+    smart@thinkpad$ ping 192.168.124.45
+    PING 192.168.124.45 (192.168.124.45) 56(84) bytes of data.
+    ^C
+    --- 192.168.124.45 ping statistics ---
+    3 packets transmitted, 0 received, 100% packet loss, time 2041ms
+\end{Verbatim}
+
+А SSH соединение работает
+\begin{Verbatim}[frame=single]
+    smart@thinkpad$ ssh user@192.168.124.45 -v
+    OpenSSH_9.2p1, OpenSSL 3.0.8 7 Feb 2023
+    debug1: Reading configuration data /home/smart/.ssh/config
+    debug1: /home/smart/.ssh/config line 9: Applying options for *
+    debug1: Reading configuration data /etc/ssh/ssh_config
+    debug1: auto-mux: Trying existing master
+    debug1: Control socket "/tmp/ssh-master-socket-user@192.168.124.45:22" does not exist
+    debug1: Connecting to 192.168.124.45 [192.168.124.45] port 22.
+    debug1: Connection established.
+    debug1: identity file /home/smart/.ssh/id_rsa type 0
+    debug1: identity file /home/smart/.ssh/id_rsa-cert type -1
+    debug1: identity file /home/smart/.ssh/id_ecdsa type -1
+    debug1: identity file /home/smart/.ssh/id_ecdsa-cert type -1
+    debug1: identity file /home/smart/.ssh/id_ecdsa_sk type -1
+    debug1: identity file /home/smart/.ssh/id_ecdsa_sk-cert type -1
+    debug1: identity file /home/smart/.ssh/id_ed25519 type -1
+    debug1: identity file /home/smart/.ssh/id_ed25519-cert type -1
+    debug1: identity file /home/smart/.ssh/id_ed25519_sk type -1
+    debug1: identity file /home/smart/.ssh/id_ed25519_sk-cert type -1
+    debug1: identity file /home/smart/.ssh/id_xmss type -1
+    debug1: identity file /home/smart/.ssh/id_xmss-cert type -1
+    debug1: identity file /home/smart/.ssh/id_dsa type -1
+    debug1: identity file /home/smart/.ssh/id_dsa-cert type -1
+    debug1: Local version string SSH-2.0-OpenSSH_9.2
+    debug1: Remote protocol version 2.0, remote software version OpenSSH_9.0p1 Ubuntu-1ubuntu7.1
+    debug1: compat_banner: match: OpenSSH_9.0p1 Ubuntu-1ubuntu7.1 pat OpenSSH* compat 0x04000000
+    debug1: Authenticating to 192.168.124.45:22 as 'user'
+    debug1: load_hostkeys: fopen /home/smart/.ssh/known_hosts2: No such file or directory
+    debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts: No such file or directory
+    debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts2: No such file or directory
+    debug1: SSH2_MSG_KEXINIT sent
+    debug1: SSH2_MSG_KEXINIT received
+    debug1: kex: algorithm: sntrup761x25519-sha512@openssh.com
+    debug1: kex: host key algorithm: ssh-ed25519
+    debug1: kex: server->client cipher: chacha20-poly1305@openssh.com MAC: <implicit> compression: zlib@openssh.com
+    debug1: kex: client->server cipher: chacha20-poly1305@openssh.com MAC: <implicit> compression: zlib@openssh.com
+    debug1: expecting SSH2_MSG_KEX_ECDH_REPLY
+    debug1: SSH2_MSG_KEX_ECDH_REPLY received
+    debug1: Server host key: ssh-ed25519 SHA256:VkxEMLu05eDeu12IbmBEnWIEKf/4SuRitIGVjYeH6z0
+    debug1: load_hostkeys: fopen /home/smart/.ssh/known_hosts2: No such file or directory
+    debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts: No such file or directory
+    debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts2: No such file or directory
+    debug1: Host '192.168.124.45' is known and matches the ED25519 host key.
+    debug1: Found key in /home/smart/.ssh/known_hosts:58
+    debug1: rekey out after 134217728 blocks
+    debug1: SSH2_MSG_NEWKEYS sent
+    debug1: expecting SSH2_MSG_NEWKEYS
+    debug1: SSH2_MSG_NEWKEYS received
+    debug1: rekey in after 134217728 blocks
+    debug1: Will attempt key: /home/smart/.ssh/id_rsa RSA SHA256:e/fioi65Tz2gyc473GqAAYvNcYKpMk6hh0aoYFsYJK4
+    debug1: Will attempt key: /home/smart/.ssh/id_ecdsa 
+    debug1: Will attempt key: /home/smart/.ssh/id_ecdsa_sk 
+    debug1: Will attempt key: /home/smart/.ssh/id_ed25519 
+    debug1: Will attempt key: /home/smart/.ssh/id_ed25519_sk 
+    debug1: Will attempt key: /home/smart/.ssh/id_xmss 
+    debug1: Will attempt key: /home/smart/.ssh/id_dsa 
+    debug1: SSH2_MSG_EXT_INFO received
+    debug1: kex_input_ext_info: server-sig-algs=<ssh-ed25519,sk-ssh-ed25519@openssh.com,ssh-rsa,rsa-sha2-256,rsa-sha2-512,ssh-dss,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,sk-ecdsa-sha2-nistp256@openssh.com,webauthn-sk-ecdsa-sha2-nistp256@openssh.com>
+    debug1: kex_input_ext_info: publickey-hostbound@openssh.com=<0>
+    debug1: SSH2_MSG_SERVICE_ACCEPT received
+    debug1: Authentications that can continue: publickey,password
+    debug1: Next authentication method: publickey
+    debug1: Offering public key: /home/smart/.ssh/id_rsa RSA SHA256:e/fioi65Tz2gyc473GqAAYvNcYKpMk6hh0aoYFsYJK4
+    debug1: Authentications that can continue: publickey,password
+    debug1: Trying private key: /home/smart/.ssh/id_ecdsa
+    debug1: Trying private key: /home/smart/.ssh/id_ecdsa_sk
+    debug1: Trying private key: /home/smart/.ssh/id_ed25519
+    debug1: Trying private key: /home/smart/.ssh/id_ed25519_sk
+    debug1: Trying private key: /home/smart/.ssh/id_xmss
+    debug1: Trying private key: /home/smart/.ssh/id_dsa
+    debug1: Next authentication method: password
+    user@192.168.124.45's password: 
+    debug1: Enabling compression at level 6.
+    Authenticated to 192.168.124.45 ([192.168.124.45]:22) using "password".
+    debug1: setting up multiplex master socket
+    debug1: channel 0: new mux listener [/tmp/ssh-master-socket-user@192.168.124.45:22] (inactive timeout: 0)
+    debug1: control_persist_detach: backgrounding master process
+    debug1: forking to background
+    debug1: Entering interactive session.
+    debug1: pledge: id
+    debug1: multiplexing control connection
+    debug1: channel 1: new mux-control [mux-control] (inactive timeout: 0)
+    debug1: channel 2: new session [client-session] (inactive timeout: 0)
+    debug1: client_input_global_request: rtype hostkeys-00@openssh.com want_reply 0
+    debug1: client_input_hostkeys: searching /home/smart/.ssh/known_hosts for 192.168.124.45 / (none)
+    debug1: client_input_hostkeys: searching /home/smart/.ssh/known_hosts2 for 192.168.124.45 / (none)
+    debug1: client_input_hostkeys: hostkeys file /home/smart/.ssh/known_hosts2 does not exist
+    debug1: client_input_hostkeys: no new or deprecated keys from server
+    debug1: Sending environment.
+    debug1: channel 2: setting env LANG = "en_US.UTF-8"
+    debug1: mux_client_request_session: master session id: 2
+    Welcome to Ubuntu 22.10 (GNU/Linux 5.19.0-31-generic x86_64)
+
+    * Documentation:  https://help.ubuntu.com
+    * Management:     https://landscape.canonical.com
+    * Support:        https://ubuntu.com/advantage
+
+    0 updates can be applied immediately.
+
+    Last login: Thu Feb 16 19:51:12 2023 from 192.168.124.62
+    ~
+    user@ubuntu$ 
+    logout
+    debug1: client_input_channel_req: channel 2 rtype exit-status reply 0
+    debug1: client_input_channel_req: channel 2 rtype eow@openssh.com reply 0
+    debug1: channel 2: free: client-session, nchannels 3
+    debug1: channel 1: free: mux-control, nchannels 2
+    Shared connection to 192.168.124.45 closed.
+\end{Verbatim}
+
+\section*{Выводы}
+\addcontentsline{toc}{section}{Выводы}
+
+В этой работе мы познакомились с дополнительными модулями iptables.
+
+Гибкое комбинирование различных правил позволяет добиться максимально конкретного результата.
