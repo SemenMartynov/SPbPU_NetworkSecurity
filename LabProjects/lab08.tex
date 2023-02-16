@@ -1,0 +1,213 @@
+\chapter*{Лабораторная работа 8. Сетевое экранирование. Применение правил iptables}
+\addcontentsline{toc}{chapter}{Лабораторная работа 8. Сетевое экранирование. Применение правил iptables}
+
+\textbf{Цель работы:} 
+
+\section*{1. Определение IP-адреса}
+\addcontentsline{toc}{section}{1. Определение IP-адреса}
+
+Выполним подключение по ssh к удалённому хосту и запросим его IP адрес с помощью утилиты \texttt{ip}.
+
+\begin{Verbatim}[frame=single]
+    user@ubuntu:~$ ip a
+    1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+        link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+        inet 127.0.0.1/8 scope host lo
+        valid_lft forever preferred_lft forever
+        inet6 ::1/128 scope host 
+        valid_lft forever preferred_lft forever
+    2: enp0s3: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
+        link/ether 08:00:27:2a:f7:85 brd ff:ff:ff:ff:ff:ff
+        inet 192.168.124.45/24 metric 100 brd 192.168.124.255 scope global dynamic enp0s3
+        valid_lft 24307sec preferred_lft 24307sec
+        inet6 fe80::a00:27ff:fe2a:f785/64 scope link 
+        valid_lft forever preferred_lft forever
+\end{Verbatim}
+
+Интересующий нас адрес -- \texttt{192.168.124.45}.
+
+\section*{2. Просмотр текущие правил}
+\addcontentsline{toc}{section}{2. Просмотр текущие правил}
+
+Список текущих правил можно получить командой\\\texttt{iptables --list --numeric --verbose --line-numbers} (требует прав суперпользователя), где:
+
+\begin{itemize}
+    \item \texttt{--list} -- показать все правила в выбранной цепочке (если цепочка не выбрана, то во всех цепочках);
+    \item \texttt{--numeric} -- выводить IP-адреса и номера портов в числовом виде предотвращая попытки преобразовать их в символические имена;
+    \item \texttt{--verbose} -- увеличить подробность сообщений (имена интерфейсов, параметры правил, маски TOS, счётчики);
+    \item \texttt{--line-numbers} -- вывода номеров строк соответствующих позиции правила в цепочке.
+\end{itemize}
+
+\begin{Verbatim}[frame=single]
+    user@ubuntu:~$ sudo iptables --list --numeric --verbose --line-numbers
+    Chain INPUT (policy ACCEPT 0 packets, 0 bytes)
+    num   pkts bytes target     prot opt in     out   source    destination
+
+    Chain FORWARD (policy ACCEPT 0 packets, 0 bytes)
+    num   pkts bytes target     prot opt in     out   source    destination
+
+    Chain OUTPUT (policy ACCEPT 0 packets, 0 bytes)
+    num   pkts bytes target     prot opt in     out   source    destination
+\end{Verbatim}
+
+На данном этапе все цепочки пусты.
+
+\section*{3. Блокировка входящего трафика}
+\addcontentsline{toc}{section}{3. Блокировка входящего трафика}
+
+Заблокируем весь входящий трафик, модифицировав таблицу \texttt{INPUT}
+
+\begin{Verbatim}[frame=single]
+    user@ubuntu:~$ sudo iptables --append INPUT --jump DROP
+\end{Verbatim}
+
+Это естественным образом привело к "зависанию" терминала и обрыву сессии по таймауту.
+
+Новое соединение так же установить нелья, оно отваливается по таймауту.
+
+\begin{Verbatim}[frame=single]
+    smart@thinkpad$ ssh user@192.168.124.45 -vvvv
+    OpenSSH_9.2p1, OpenSSL 3.0.8 7 Feb 2023
+    debug1: Reading configuration data /home/smart/.ssh/config
+    debug1: /home/smart/.ssh/config line 9: Applying options for *
+    debug1: Reading configuration data /etc/ssh/ssh_config
+    debug2: resolve_canonicalize: hostname 192.168.124.45 is address
+    debug3: expanded UserKnownHostsFile '~/.ssh/known_hosts' -> '/home/smart/.ssh/known_hosts'
+    debug3: expanded UserKnownHostsFile '~/.ssh/known_hosts2' -> '/home/smart/.ssh/known_hosts2'
+    debug1: auto-mux: Trying existing master
+    debug1: Control socket "/tmp/ssh-master-socket-user@192.168.124.45:22" does not exist
+    debug3: ssh_connect_direct: entering
+    debug1: Connecting to 192.168.124.45 [192.168.124.45] port 22.
+    debug3: set_sock_tos: set socket 3 IP_TOS 0x48
+    debug1: connect to address 192.168.124.45 port 22: Connection timed out
+    ssh: connect to host 192.168.124.45 port 22: Connection timed out
+\end{Verbatim}
+
+Запросы ping до удалённого хоста не проходят
+
+\begin{Verbatim}[frame=single]
+    smart@thinkpad$ ping 192.168.124.45
+    PING 192.168.124.45 (192.168.124.45) 56(84) bytes of data.
+    ^C
+    --- 192.168.124.45 ping statistics ---
+    283 packets transmitted, 0 received, 100% packet loss, time 285758ms
+\end{Verbatim}
+
+Сканер Nmap не может обнаружить открыте порты (но видит MAC-адрес сетевого интерфейса)
+
+\begin{Verbatim}[frame=single]
+    smart@thinkpad$ sudo nmap -sO 192.168.124.45
+    Starting Nmap 7.93 ( https://nmap.org ) at 2023-02-16 12:29 MSK
+    Nmap scan report for 192.168.124.45
+    Host is up (0.00020s latency).
+    All 256 scanned ports on 192.168.124.45 are in ignored states.
+    Not shown: 256 open|filtered n/a protocols (no-response)
+    MAC Address: 08:00:27:2A:F7:85 (Oracle VirtualBox virtual NIC)
+
+    Nmap done: 1 IP address (1 host up) scanned in 6.40 seconds
+\end{Verbatim}
+
+С удалённого хоста тоже не получается обратиться ко внешней сети
+\begin{Verbatim}[frame=single]
+    user@ubuntu$ ping ya.ru
+    ^C
+    ~
+    user@ubuntu$ ping 8.8.8.8
+    PING 8.8.8.8 (8.8.8.8) 56(84) bytes of data.
+    ^C
+    --- 8.8.8.8 ping statistics ---
+    5 packets transmitted, 0 received, 100% packet loss, time 4080ms
+\end{Verbatim}
+
+Теперь посмотрим правила iptables на удалённой машине, и отметим увеличение счётчика заблокированных пакетов.
+\begin{Verbatim}[frame=single]
+    user@ubuntu$ sudo iptables --list --numeric --verbose --line-numbers
+    Chain INPUT (policy ACCEPT 0 packets, 0 bytes)
+    num   pkts bytes target     prot opt in   out   source      destination
+    1      267 65107 DROP       all  --  *    *     0.0.0.0/0   0.0.0.0/0
+
+    Chain FORWARD (policy ACCEPT 0 packets, 0 bytes)
+    num   pkts bytes target     prot opt in   out   source      destination
+
+    Chain OUTPUT (policy ACCEPT 0 packets, 0 bytes)
+    num   pkts bytes target     prot opt in   out   source      destination
+\end{Verbatim}
+
+\section*{4. Фильтрация входящего трафика}
+\addcontentsline{toc}{section}{4. Фильтрация входящего трафика}
+
+Тут мы предполагаем, что на удалённом сервер работают следующие сервисы:
+\begin{itemize}
+    \item DNS: 53/udp -- стандартный порт
+    \item DNS: 53/tcp -- RFC описывает случаи, когда DNS может/должен переходить на TCP
+    \item WEB: 80/tcp -- стандартный порт http
+    \item WEB: 443/tcp -- стандартный порт https
+    \item WEB: 443/udp -- стандартный порт https (http3)
+\end{itemize}
+
+Установим \texttt{DROP} в качестве политики по умолчанию:\\
+\texttt{sudo iptables --policy INPUT DROP}
+
+Разрешим свободное хождение трафика на локальном интерфейсе:\\
+\texttt{sudo iptables --append INPUT --in-interface lo --jump ACCEPT}
+
+Разрешим DNS подключения:\\
+\texttt{sudo iptables --append INPUT --protocol udp --dport 53 --jump ACCEPT}\\
+\texttt{sudo iptables --append INPUT --protocol tcp --dport 53 --jump ACCEPT}
+
+Ответы, от вышестоящих DNS-серверов:\\
+\texttt{sudo iptables --append INPUT --protocol udp --sport 53 --dport 1024:65535 --jump ACCEPT}\\
+\texttt{sudo iptables --append INPUT --protocol tcp --sport 53 --dport 1024:65535 --jump ACCEPT}
+
+Запросы для Web-сервера:\\
+\texttt{sudo iptables --append INPUT --protocol tcp --match multiport --dports 80,443 --jump ACCEPT}\\
+\texttt{sudo iptables --append INPUT --protocol udp --dport 443 --jump ACCEPT}
+
+Итоговые правила выглядят следующим образом
+\begin{Verbatim}[frame=single]
+    user@ubuntu$ sudo iptables --list --numeric --verbose --line-numbers
+    Chain INPUT (policy DROP 0 packets, 0 bytes)
+    num pkts bytes target  prot opt in  out  source     destination
+    1      0     0 ACCEPT  all  --  lo  *    0.0.0.0/0  0.0.0.0/0  
+    2      0     0 ACCEPT  udp  --  *   *    0.0.0.0/0  0.0.0.0/0   udp dpt:53
+    3      0     0 ACCEPT  tcp  --  *   *    0.0.0.0/0  0.0.0.0/0   tcp dpt:53
+    4      0     0 ACCEPT  udp  --  *   *    0.0.0.0/0  0.0.0.0/0   udp spt:53 dpts:1024:65535
+    4     17  3170 ACCEPT  udp  --  *   *    0.0.0.0/0  0.0.0.0/0   udp spt:53 dpts:1024:65535
+    5      0     0 ACCEPT  tcp  --  *   *    0.0.0.0/0  0.0.0.0/0   tcp spt:53 dpts:1024:65535
+    6      7   366 ACCEPT  tcp  --  *   *    0.0.0.0/0  0.0.0.0/0   multiport dports 80,443
+    7      0     0 ACCEPT  udp  --  *   *    0.0.0.0/0  0.0.0.0/0   udp dpt:443
+
+    Chain FORWARD (policy ACCEPT 0 packets, 0 bytes)
+    num pkts bytes target  prot opt in  out  source     destination
+
+    Chain OUTPUT (policy ACCEPT 0 packets, 0 bytes)
+    num pkts bytes target  prot opt in  out  source     destination
+\end{Verbatim}
+
+Для эмуляции работы WEB-сервера, используем Netcat.
+
+На стороне сервера:
+\begin{Verbatim}[frame=single]
+    user@ubuntu$ sudo nc -l 80
+    1
+    2
+    3
+\end{Verbatim}
+
+На стороне клиента:
+\begin{Verbatim}[frame=single]
+    smart@thinkpad$ nc 192.168.124.45 80
+    1
+    2
+    3
+\end{Verbatim}
+
+Передача происходит без потерь.
+
+\section*{Выводы}
+\addcontentsline{toc}{section}{Выводы}
+
+В этой работе мы познакомились с основными возможностями по управлению цепочками в iptables.
+
+По итогам работы, мы получили сервер, защищённый от внешних подключений.
+
