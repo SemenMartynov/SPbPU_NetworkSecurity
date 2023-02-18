@@ -1,0 +1,319 @@
+\chapter*{Лабораторная работа 10. Ограничение количества соединений}
+\addcontentsline{toc}{chapter}{Лабораторная работа 10. Ограничение количества соединений}
+
+\textbf{Цель работы:} Исследовать средства ограничения количества соединений к серверу с клиентских компьютеров.
+
+\section*{Введение}
+\addcontentsline{toc}{section}{Введение}
+
+Linux, как и все операционные системы общего назначения, работает с максимальной эффективностью. Это означает, что, как правило, пока есть доступные ресурсы, приложения могут их запрашивать. С другой стороны, если какой-то пул ресурсов истощается, это может повлиять на работоспособность и скорость отклика всей системы.
+
+Таким образом, даже если теоретически Linux не должен ограничивать использование ресурсов до пределов аппаратного обеспечения, на практике должен. Многие атаки типа "отказ в обслуживании" (DoS) работают пытаясь истощить целевые ресурсы. Чтобы избежать серьезных последствий, в любой современной операционной системе по умолчанию действуют политики использования ресурсов. Администратору может потребоваться настроить политики ограничения в соответствии с их вариантами использования. Кроме того, значения по умолчанию обычно подходят для общего использования.
+
+Существует множество средств контроля безопасности, обеспечивающих стабильность и быстродействие системы.
+
+\section*{1. Файловые дескрипторы}
+\addcontentsline{toc}{section}{1. Файловые дескрипторы}
+
+Способ, которым Linux и другие операционные системы на основе POSIX взаимодействуют между процессами, называется межпроцессным взаимодействием или IPC. Одна из прелестей этой концепции заключается в том, что она применима к связи между процессами на одном хосте или через сеть компьютеров. Это означает, что оба сценария имеют общую основу для базовых API.
+
+Если у нас есть две программы на одном хосте, которые общаются друг с другом с помощью Sockets API (стандарт де-факто для потоковой передачи данных в POSIX), их преобразование для работы на разных серверах потребует минимальных изменений. Следовательно, ядро предоставляет конечные точки связи в аналогичных формах.
+
+Стоит заметить, что Sockets IPC API, используемый в Linux TCP/IP-соединениях, использует файловые дескрипторы. Таким образом, количество открытых файловых дескрипторов является одним из первых ограничений, с которыми можно столкнуться. Это относится как к сокетам TCP, так и к UDP.
+
+\subsection*{1.1 Ограничения файловых дескрипторов на уровне ядра}
+\addcontentsline{toc}{subsection}{1.1 Ограничения файловых дескрипторов на уровне ядра}
+
+Значения уровня ядра применимы ко всей системы. Количество доступных дескрипторов содержится в \texttt{/proc/sys/fs/file-max}.
+
+\begin{lstlisting}[style=CommandLineStyle]
+    user@ubuntu$ cat /proc/sys/fs/file-max
+    9223372036854775807
+\end{lstlisting}
+
+Это огромное число используется по умолчанию во многих дистрибутивах. Чтобы изменить это ограничение, мы можем установить его на лету с помощью команды \texttt{sysctl}.
+
+\begin{lstlisting}[style=CommandLineStyle]
+    user@ubuntu$ sudo sysctl fs.file-max=65536
+    [sudo] password for user: 
+    fs.file-max = 65536
+\end{lstlisting}
+
+Мы ограничили количество дескрипторов до первой перезагрузки. Чтобы сделать эти изменения постоянными, нужно добавить запись в файл \texttt{/etc/sysctl.conf}, где можно установить постоянные настройки настройки записав строчку:
+
+\texttt{fs.file-max=65536  \# Ограничение количества открытых дескрипторов (файлов)}
+
+Всякий раз, когда предел будет достигнут, система выдаст событие "Слишком много открытых файлов в системе". Текущее использование дескриптором можно увидеть следующим образом:
+
+\begin{lstlisting}[style=CommandLineStyle]
+    user@ubuntu$ cat /proc/sys/fs/file-nr
+    6592	0	65536
+\end{lstlisting}
+
+Здесь мы видим три числа:
+\begin{itemize}
+    \item текущее число используемых файловых дескрипторов;
+    \item выделенное, но неиспользуемое число (всегда 0);
+    \item максимальное число (то же, что и \texttt{fs.file-max})
+\end{itemize}
+
+Наряду с общесистемным ограничением, ядро Linux налагает ограничения файлового дескриптора на каждый процесс. Это настраивается с помощью параметра \texttt{fs.nr\_open}. Значение по умолчанию -- \texttt{1048576} (снова довольно высокое значение).
+
+\subsection*{1.2 Ограничения дескрипторов на уровне пользователя}
+\addcontentsline{toc}{subsection}{1.2 Ограничения дескрипторов на уровне пользователя}
+
+Фактические ограничения накладываются оболочкой (shell) на пользовательском уровне. Каждый экземпляр оболочки устанавливает гораздо более строгий предел -- по умолчанию 1024 открытых файла.
+
+Этот лимит более чем подходит для обычных пользователей. Однако для серверных приложений он, скорее всего, достаточно низкий. Например, большие серверы баз данных могут иметь тысячи файлов данных и открытых соединений.
+
+Этими ограничениями можно управлять с помощью команды \texttt{ulimit} и сохранять их, редактируя файл \texttt{/etc/security/limits.conf}. Например, чтобы изменить ограничение процесса \texttt{Oracle} на \texttt{8192}, нужно добавить в файл эту строку:
+
+\begin{lstlisting}[style=CommandLineStyle]
+    #<domain>      <type>  <item>         <value>
+    oracle          hard    nofile         8192
+\end{lstlisting}
+
+Ключевое слово \texttt{hard} означает, что непривилегированные пользователи не могут изменять ограничение в любой момент. Мягкое ограничение позволит пользователю без полномочий root использовать команду \texttt{ulimit}, чтобы изменить его для определенных случаев использования.
+
+\section*{2. Процессы и потоки}
+\addcontentsline{toc}{section}{2. Процессы и потоки}
+
+Как и в случае с ограничением не количество файловых дескприпторов, существуют ограничения как ядра, так и пользовательского пространства на количество процессов и потоков. В серверных приложениях мы обычно назначаем соединения рабочим процессам (workers). Таким образом, их ограничения могут ограничивать количество соединений, которые они могут обрабатывать.
+
+Для процессов ограничивающими параметрами являются:
+\begin{itemize}
+    \item Пространство ядра: \texttt{kernel.pid\_max}. По умолчанию \texttt{32767} и управляет общесистемным размером таблицы процессов.
+    \item Пространство пользователя: \texttt{ulimit -u} или параметр \texttt{nproc} в \texttt{limit.conf}. Максимальное количество пользовательских процессов \texttt{15397}.
+\end{itemize}
+
+И, для потоков:
+\begin{itemize}
+    \item Пространство ядра: \texttt{kernel.threads-max}. Максимальное количество потоков, которые может создать системный вызов \texttt{fork}. Его можно уменьшить в реальном времени, когда таблица процессов достигает 1/8 оперативной памяти системы.
+    \item Пространство пользователя: \texttt{общая виртуальная память / (размер стека * 1024 * 1024)}. Размер стека контролируется с помощью \texttt{ulimit -s} или элемента \texttt{stack} в \texttt{limit.conf}.
+\end{itemize}
+
+\section*{3. Параметры сетевого стека}
+\addcontentsline{toc}{section}{3. Параметры сетевого стека}
+
+Существуют параметры ядра, которые могут косвенно влиять на количество TCP-соединений. TCP имеет довольно сложный конечный автомат и ядро должно отслеживать каждое состояние соединения (тайминги и переходы). Кроме управляющих таблиц TCP, можно рассмотреть настройки Netfilter, которые так же могут влиять на ограничение TCP-соединений.
+
+Для Netfilter:
+\begin{itemize}
+    \item \texttt{net.netfilter.nf\_conntrack\_max}: максимальное количество подключений для отслеживания.
+    \item \texttt{nf\_conntrack\_tcp\_timeout\_*}: ограничивает тайм-аут для каждого состояния TCP-соединения(отправка/получение SYN, ожидание закрытия, прочие таймауты)
+\end{itemize}
+
+Для стека TCP:
+\begin{itemize}
+    \item \texttt{net.core.netdev\_max\_backlog}: максимальное количество пакетов в очереди на стороне получения, когда интерфейс получает пакеты быстрее, чем ядро может их обработать
+    \item \texttt{net.ipv4.ip\_local\_port\_range}: виртуальный диапазон портов (порты, динамически выделяемые на клиентской стороне соединений TCP).
+    \item \texttt{net.ipv4.somaxconn}: размер очереди установленных соединений ожидающих обработки \texttt{accept()}.
+    \item \texttt{net.ipv4.tcp\_fin\_timeout}: время, в течение которого потерянное соединение будет ждать, прежде чем оно будет прервано (состояние \texttt{TIME\_WAIT})
+    \item \texttt{net.ipv4.tcp\_tw\_reuse}: позволяет повторно использовать сокеты с ожиданием времени для новых подключений, экономит ресурсы при высоких скоростях создания и уничтожения соединений.
+    \item \texttt{net.ipv4.tcp\_max\_orphans}: максимальное количество сокетов TCP, не прикрепленных к дескриптору файла.
+    \item \texttt{net.ipv4.tcp\_max\_syn\_backlog}: максимальное количество запомненных запросов на подключение (\texttt{SYN\_RECV}), которые не получили подтверждения от подключающегося клиента.
+    \item \texttt{net.ipv4.tcp\_max\_tw\_buckets}: Максимальное число сокетов, находящихся в состоянии \texttt{TIME-WAIT} одновременно.
+\end{itemize}
+
+Некоторые другие полезные параметры можно найти по ссылкам:
+\begin{itemize}
+    \item \hyperlink{https://www.opennet.ru/docs/RUS/LARTC/x1727.html}{Малоизвестные настройки (opennet.ru)}
+    \item \hyperlink{https://habr.com/ru/company/otus/blog/340870/}{Сказ о sysctl (habr.com)}
+\end{itemize}
+
+Значение по умолчанию для этих параметров подходит для многих приложений. Как и другие параметры ядра, их значения можно установить с помощью команды \texttt{sysctl}, а сохранить изменения можно с используя файл \texttt{/etc/sysctl.conf}.
+
+\section*{4. Ограничения IP Tables}
+\addcontentsline{toc}{section}{4. Ограничения IP Tables}
+
+В предыдущих работах мы уже отмечали, что можем использовать ip tables для назначения лимитов соединений. Мы можем установить ограничения на основе исходных адресов, портов назначения и многих других параметров. При этом используются модуль \texttt{connlimit} (или более новый \texttt{hashlimit}) ip tables.
+
+Например, чтобы ограничить SSH-подключения до трёх на один IP-адрес, можно использовать:
+
+\texttt{iptables --append INPUT --protocol tcp --syn --dport 22 --match connlimit --connlimit-above 3 --jump REJECT}
+
+Где \texttt{--syn} позволяет пропускать пакеты TCP с установленным флагом SYN и снятыми ACK,RST,FIN. Такие пакеты используются для запроса создания TCP-соединения. Очевидно, блокирование таких пакетов приведёт к невозможности создания входящих TCP-соединений.
+
+На практике лучше избегать такой подход и по возможности использовать соответствующий функционал в приложении, чтобы не грузить файрволл в ядре stateful вычислениями.
+
+\section*{5. Ограничения запросов на уровне приложений}
+\addcontentsline{toc}{section}{5. Ограничения запросов на уровне приложений}
+
+Веб-сервер NGINX имеет различные модули, позволяющие контролировать конечный трафик на свои веб-сайты, веб-приложения и другие ресурсы. Одной из основных причин ограничения трафика или доступа является предотвращение злоупотреблений или атак определенных видов, таких как DoS-атаки (отказ в обслуживании).
+
+Существует три основных способа ограничения использования или трафика в NGINX:
+\begin{itemize}
+    \item Ограничение количества подключений (запросов).
+    \item Ограничение скорости запросов.
+    \item Ограничение пропускного канала.
+\end{itemize}
+
+Эти подходы к управлению трафиком, могут быть настроены для ограничения на основе определенного ключа. Наиболее распространенным ключом которых является IP-адрес клиента, но также поддерживаются другие переменные, такие как cookie-файл, сеанс, и многие другие.
+
+\subsection*{5.1 Ограничение количества подключений (запросов)}
+\addcontentsline{toc}{subsection}{5.1 Ограничение количества подключений (запросов)}
+
+Первое что нужно сделать, это определить зону общей памяти, в которой будут храниться метрики подключения для различных ключей. За это отвечает директива \texttt{limit\_conn\_zone}. Эта директива задаётся в контексте HTTP, и принимает два параметра -- ключ и зону (в формате \texttt{zone\_name:size}).
+
+\texttt{limit\_conn\_zone \$binary\_remote\_addr zone=limitconnbyaddr:20m;}
+
+Чтобы установить код состояния ответа, который возвращается на отклоненные запросы, используется директива \texttt{limit\_conn\_status}, которая принимает в качестве параметра код состояния HTTP. Она задаётся в контексте HTTP, sever и location.
+
+\texttt{limit\_conn\_status 429;}
+
+Чтобы ограничить количество подключений, используется директива \texttt{limint\_conn}. Она задаёт используемую зону памяти и максимальное количество разрешенных подключений, как показано в следующем фрагменте конфигурации. Эта директива задаётся в контексте HTTP, sever и location.
+
+\texttt{limit\_conn   limitconnbyaddr  50;}
+
+Полный конфигурационный файл будет выглядеть так (для одного клиента разрешается иметь только 1 подключение):
+\lstinputlisting[style=CommandLineStyle, numbers=left]
+{../Tasks/10_Connections_Limit/default.conf}
+
+Запуск Nginx
+\begin{lstlisting}[style=CommandLineStyle]
+    smart@thinkpad$ docker run -it --rm -v ./default.conf:/etc/nginx/conf.d/default.conf:ro -p 80:80 nginx
+    /docker-entrypoint.sh: /docker-entrypoint.d/ is not empty, will attempt to perform configuration
+    /docker-entrypoint.sh: Looking for shell scripts in /docker-entrypoint.d/
+    /docker-entrypoint.sh: Launching /docker-entrypoint.d/10-listen-on-ipv6-by-default.sh
+    10-listen-on-ipv6-by-default.sh: info: Getting the checksum of /etc/nginx/conf.d/default.conf
+    10-listen-on-ipv6-by-default.sh: info: Enabled listen on IPv6 in /etc/nginx/conf.d/default.conf
+    /docker-entrypoint.sh: Launching /docker-entrypoint.d/20-envsubst-on-templates.sh
+    /docker-entrypoint.sh: Launching /docker-entrypoint.d/30-tune-worker-processes.sh
+    /docker-entrypoint.sh: Configuration complete; ready for start up
+    2023/02/18 18:26:54 [notice] 1#1: using the "epoll" event method
+    2023/02/18 18:26:54 [notice] 1#1: nginx/1.23.3
+    2023/02/18 18:26:54 [notice] 1#1: built by gcc 10.2.1 20210110 (Debian 10.2.1-6) 
+    2023/02/18 18:26:54 [notice] 1#1: OS: Linux 6.1.12-arch1-1
+    2023/02/18 18:26:54 [notice] 1#1: getrlimit(RLIMIT_NOFILE): 1073741816:1073741816
+    2023/02/18 18:26:54 [notice] 1#1: start worker processes
+    2023/02/18 18:26:54 [notice] 1#1: start worker process 29
+    2023/02/18 18:26:54 [notice] 1#1: start worker process 30
+    2023/02/18 18:26:54 [notice] 1#1: start worker process 31
+    2023/02/18 18:26:54 [notice] 1#1: start worker process 32
+    2023/02/18 18:26:54 [notice] 1#1: start worker process 33
+    2023/02/18 18:26:54 [notice] 1#1: start worker process 34
+    2023/02/18 18:26:54 [notice] 1#1: start worker process 35
+    2023/02/18 18:26:54 [notice] 1#1: start worker process 36
+    2023/02/18 18:26:54 [notice] 1#1: start worker process 37
+    2023/02/18 18:26:54 [notice] 1#1: start worker process 38
+    2023/02/18 18:26:54 [notice] 1#1: start worker process 39
+    2023/02/18 18:26:54 [notice] 1#1: start worker process 40
+\end{lstlisting}
+
+Для тестирования, запускаем curl в несколько потоков, и очень быстро обнаруживаем в логах nginx уведомление об отказе обуслуживания очередного запроса из-за превышения количества разрешённых соединений.
+\begin{lstlisting}[style=CommandLineStyle]
+    2023/02/18 18:45:35 [error] 31#31: *3834 limiting connections by zone "limitconnbyaddr", client: 172.17.0.1, server: localhost, request: "GET / HTTP/1.1", host: "localhost"
+    2023/02/18 18:45:35 [error] 32#32: *3840 limiting connections by zone "limitconnbyaddr", client: 172.17.0.1, server: localhost, request: "GET / HTTP/1.1", host: "localhost"
+    2023/02/18 18:45:35 [error] 21#21: *3846 limiting connections by zone "limitconnbyaddr", client: 172.17.0.1, server: localhost, request: "GET / HTTP/1.1", host: "localhost"
+    2023/02/18 18:45:35 [error] 21#21: *3856 limiting connections by zone "limitconnbyaddr", client: 172.17.0.1, server: localhost, request: "GET / HTTP/1.1", host: "localhost"
+    2023/02/18 18:45:35 [error] 22#22: *3870 limiting connections by zone "limitconnbyaddr", client: 172.17.0.1, server: localhost, request: "GET / HTTP/1.1", host: "localhost"
+    2023/02/18 18:45:36 [error] 23#23: *3881 limiting connections by zone "limitconnbyaddr", client: 172.17.0.1, server: localhost, request: "GET / HTTP/1.1", host: "localhost"
+    2023/02/18 18:45:36 [error] 23#23: *3887 limiting connections by zone "limitconnbyaddr", client: 172.17.0.1, server: localhost, request: "GET / HTTP/1.1", host: "localhost"
+    2023/02/18 18:45:36 [error] 24#24: *3895 limiting connections by zone "limitconnbyaddr", client: 172.17.0.1, server: localhost, request: "GET / HTTP/1.1", host: "localhost"
+    2023/02/18 18:45:37 [error] 27#27: *3926 limiting connections by zone "limitconnbyaddr", client: 172.17.0.1, server: localhost, request: "GET / HTTP/1.1", host: "localhost"
+    2023/02/18 18:45:37 [error] 26#26: *3944 limiting connections by zone "limitconnbyaddr", client: 172.17.0.1, server: localhost, request: "GET / HTTP/1.1", host: "localhost"
+\end{lstlisting}
+
+\subsection*{5.2 Ограничение скорости запросов}
+\addcontentsline{toc}{subsection}{5.2 Ограничение скорости запросов}
+
+Ограничение скорости — это метод управления трафиком, используемый для ограничения количества HTTP-запросов, которые клиент может сделать за определенный период времени. Ограничения скорости рассчитываются в количестве запросов в секунду (или RPS).
+
+Примером запроса является запрос GET для страницы входа в приложение или запрос POST для формы входа или POST для конечной точки API.
+
+Существует множество причин для ограничения скорости запросов веб-приложениям или службам API, одна из которых связана с безопасностью: защита от неправомерных быстрых запросов.
+
+Определения параметров ограничения скорости выполняется помощью директивы \texttt{limit\_req\_zone}. Обязательными параметрами являются:
+\begin{itemize}
+    \item ключ для идентификации клиентов
+    \item зона общей памяти, в которой будет храниться состояние ключа и частота обращения к URL-адресу с ограничением запросов
+    \item предельная скорость запроса
+\end{itemize}
+
+Директива \texttt{limit\_req\_zone} определяется в контексте HTTP.
+
+\texttt{limit\_req\_zone \$binary\_remote\_addr zone=limitreqsbyaddr:20m rate=10r/s;}
+
+Аналогично предыдущему примеру, установим код состояния ответа, который возвращается на отклоненные запросы, используя директиву \texttt{limit\_req\_status}, которая определяется в контексте HTTP, server и location.
+
+\texttt{limit\_req\_status 429;}
+
+Включить ограничение скорости запросов нужно используя директиву \texttt{limint\_conn}. Она определяется в контексте HTTP, server и location. В качестве параметров она принимает зону памяти.
+
+\texttt{limit\_req=limitreqsbyaddr;}
+
+В следующем примере конфигурации показано ограничение частоты запросов к API веб-приложения. Размер общей памяти составляет 1 МБ, а ограничение скорости запросов -- 1 запрос в секунду.
+\lstinputlisting[style=CommandLineStyle, numbers=left]
+{../Tasks/10_Connections_Limit/default2.conf}
+
+Запускаем контейнер с этим конфигурационным файлом
+\begin{lstlisting}[style=CommandLineStyle]
+    smart@thinkpad$ docker run -it --rm -v ./default2.conf:/etc/nginx/conf.d/default.conf:ro -p 80:80 nginx
+\end{lstlisting}
+
+Выполняем пару запросов curl с интервалом меньше 1 секунды. Запрос nginx отклонён с кодом 429.
+\begin{lstlisting}[style=CommandLineStyle]
+    smart@thinkpad$ curl localhost:80
+    <html>
+    <head><title>429 Too Many Requests</title></head>
+    <body>
+    <center><h1>429 Too Many Requests</h1></center>
+    <hr><center>nginx/1.23.3</center>
+    </body>
+    </html>
+\end{lstlisting}
+
+В логах nginx появляется такая запись.
+
+\begin{lstlisting}[style=CommandLineStyle]
+    2023/02/18 19:04:20 [error] 21#21: *21 limiting requests, excess: 0.777 by zone "limitreqsbyaddr", client: 172.17.0.1, server: localhost, request: "GET / HTTP/1.1", host: "localhost"
+    2023/02/18 19:04:21 [error] 21#21: *22 limiting requests, excess: 0.665 by zone "limitreqsbyaddr", client: 172.17.0.1, server: localhost, request: "GET / HTTP/1.1", host: "localhost"
+    2023/02/18 19:04:21 [error] 21#21: *23 limiting requests, excess: 0.557 by zone "limitreqsbyaddr", client: 172.17.0.1, server: localhost, request: "GET / HTTP/1.1", host: "localhost"
+    2023/02/18 19:04:21 [error] 21#21: *24 limiting requests, excess: 0.443 by zone "limitreqsbyaddr", client: 172.17.0.1, server: localhost, request: "GET / HTTP/1.1", host: "localhost"
+    2023/02/18 19:04:21 [error] 21#21: *25 limiting requests, excess: 0.330 by zone "limitreqsbyaddr", client: 172.17.0.1, server: localhost, request: "GET / HTTP/1.1", host: "localhost"
+    2023/02/18 19:04:26 [error] 21#21: *27 limiting requests, excess: 0.735 by zone "limitreqsbyaddr", client: 172.17.0.1, server: localhost, request: "GET / HTTP/1.1", host: "localhost"
+\end{lstlisting}
+
+\subsection*{5.3 Ограничение пропускного канала}
+\addcontentsline{toc}{subsection}{5.3 Ограничение пропускного канала}
+
+Чтобы гарантировать, что пропускная способность приложения не расходуется на одного "толстого" клиента (с большим пропускным каналом), необходимо контролировать скорость загрузки и выгрузки для каждого клиента. Это обычная защита NGINX от DoS-атак со стороны злоумышленников, которые просто пытаются злоупотребить производительностью сайта.
+
+Для ограничения пропускного канала в NGINX используется директива \texttt{limit\_rate}, которая ограничивает скорость передачи ответа клиенту. Она определяется в конткестах HTTP, server, location и if блоках внутри location. По умолчанию указывает ограничение скорости в байтах в секунду, но можно использовать \texttt{m} для мегабайт или \texttt{g} для гигабайт.
+
+\texttt{limit\_rate 20k;}
+
+С ней связана директива \texttt{limit\_rate\_after}, которая указывает что соединение не должно быть ограничено по скорости до тех пор, пока не будет передано указанное количество данных. Эта директива может быть задана в тех же контекстах, что и \texttt{limit\_rate}.
+
+\texttt{limit\_rate\_after 500k;}
+
+В этом примере мы ограничиваем загрузку клиентом содержимого до максимальной скорости 5 килобайт в секунду.
+\lstinputlisting[style=CommandLineStyle, numbers=left]
+{../Tasks/10_Connections_Limit/default3.conf}
+
+Запуск сервера
+\begin{lstlisting}[style=CommandLineStyle]
+    smart@thinkpad$ docker run -it --rm -v ./default3.conf:/etc/nginx/conf.d/default.conf:ro -p 80:80 nginx
+\end{lstlisting}
+
+Целевой документ крайне мал по объёму, но после нескольких попыток можно заметить замедление скорости передачи.
+\begin{lstlisting}[style=CommandLineStyle]
+    smart@thinkpad$ curl -o /dev/null -s -w %{time_total}\\n  localhost
+    0.000882
+
+    smart@thinkpad$ curl -o /dev/null -s -w %{time_total}\\n  localhost
+    0.000871
+
+    smart@thinkpad$ curl -o /dev/null -s -w %{time_total}\\n  localhost
+    0.000566
+
+    smart@thinkpad$ curl -o /dev/null -s -w %{time_total}\\n  localhost
+    0.000861
+\end{lstlisting}
+
+\section*{Выводы}
+\addcontentsline{toc}{section}{Выводы}
+
+В этой работе мы рассмотрели различные механизмы ограничения скорости соединения, и обозначили в каких ситуациях это нужно.
+
+С практической стороны, нет универсального решения, и каждый потенциальный вектор атаки должен встречать свой подход для защиты.

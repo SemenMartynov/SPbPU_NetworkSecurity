@@ -34,6 +34,7 @@
 
 %------------------------------------------------------------------------------
 \usepackage{listings}						% type­set source code list­ings
+\usepackage{textcomp}						% for other glyphs
 
 % Цвета для кода
 \definecolor{string}{HTML}{101AF9}			% цвет строк в коде
@@ -56,6 +57,7 @@
 	morecomment=[l][\color{morecomment}]{\#},
 	% Настройки отображения
 	breaklines=true,						% Перенос длинных строк
+	postbreak=\raisebox{0ex}[0ex][0ex]{\ensuremath{\color{red}\hookrightarrow\space}},
 	basicstyle=\ttfamily\footnotesize,		% Шрифт для отображения кода
 	backgroundcolor=\color{bk},				% Цвет фона кода
 	%frame=lrb,xleftmargin=\fboxsep,xrightmargin=-\fboxsep, % Рамка, подогнанная к заголовку
@@ -101,6 +103,22 @@
         {Ґ}{{\selectfont\char128}}1
 }
 
+\lstdefinestyle{CommandLineStyle}{
+    basicstyle=\small\ttfamily,
+    % basicstyle=\fontfamily{pcr}\footnotesize,
+    numbers=none,
+    frame=tblr								% draw a frame at all sides of the code block
+    rulecolor=\color{frame},				% Цвет рамки
+    tabsize=2,								% tab space width
+    showstringspaces=false,					% don't mark spaces in strings
+    columns=fullflexible,
+    breaklines=true,
+    breakindent=1em,
+    postbreak=\raisebox{0ex}[0ex][0ex]{\ensuremath{\color{red}\hookrightarrow\space}},
+    breakautoindent=true,
+    literate={`}{\textasciigrave}{1}
+}
+
 % Для настройки заголовка кода
 \usepackage{caption}
 \DeclareCaptionFont{white}{\color{сaptiontext}}
@@ -122,6 +140,7 @@
 \input{lab07}
 \input{lab08}
 \input{lab09}
+\input{lab10}
 %\input{text}                                 % inclide the main text
 %\input{sources}                              % inclide the list of sources
 
@@ -132,7 +151,7 @@
 % Examples:
 %
 %
-%
+% Image:
 % \begin{figure}[H]
 % \centering
 % \includegraphics[scale=0.8]{res/pic01}
@@ -140,7 +159,7 @@
 % \end{figure}
 %
 %
-%
+% Table:
 % \begin{table}[htb]
 %     \begin{tabularx}{\textwidth}{|X|c|c|c|c|c|}
 %     \hline
@@ -153,3 +172,32 @@
 %     \end{tabularx}
 % \caption{Table description}
 % \end{table}
+%
+% Something in a frame:
+% \begin{Verbatim}[frame=single]
+%    user@ubuntu$ cat /proc/sys/fs/file-nr
+% \end{Verbatim}
+%
+%
+% CPP code
+% \lstinputlisting[language=C++, caption={Фрагмент исходного кода модифицированного файла игры}, firstline=73, lastline=80]
+% {../Tasks/2_L4_Socket_sample/source_files/server_game_upd.cpp}
+%
+%
+% Any other code
+% \fbox{
+%     \parbox{\textwidth}{%
+%     \texttt{\noindent
+%     \#<domain>      <type>  <item>         <value>\\
+%     oracle          hard    nofile         8192
+%     }}%
+% }
+%
+%
+% Console output
+% \begin{lstlisting}[style=CommandLineStyle]
+%     user@ubuntu$ sudo sysctl fs.file-max=65536
+%     [sudo] password for user: 
+%     fs.file-max = 65536
+% \end{lstlisting}
+%

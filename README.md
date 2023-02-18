@@ -11,3 +11,4 @@
 - Утилиты Netcat и Cryptcat (ЛР7) [>>](https://github.com/SemenMartynov/SPbPU_NetworkSecurity/blob/main/LabProjects/lab07.tex)
 - Сетевое экранирование. Применение правил iptables (ЛР8) [>>](https://github.com/SemenMartynov/SPbPU_NetworkSecurity/blob/main/LabProjects/lab08.tex)
 - Сетевое экранирование. Работа с iptables (ЛР9) [>>](https://github.com/SemenMartynov/SPbPU_NetworkSecurity/blob/main/LabProjects/lab09.tex)
+- Ограничение количества соединений (ЛР10) [>>](https://github.com/SemenMartynov/SPbPU_NetworkSecurity/blob/main/LabProjects/lab10.tex)
