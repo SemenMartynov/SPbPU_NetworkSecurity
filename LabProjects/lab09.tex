@@ -7,7 +7,7 @@
 \addcontentsline{toc}{section}{1. Предусловия}
 
 Удалённый сервер с чистыми цепочками iptables
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     user@ubuntu$ sudo iptables --list --numeric --verbose --line-numbers
     Chain INPUT (policy ACCEPT 0 packets, 0 bytes)
     num   pkts bytes target     prot opt in   out   source    destination
@@ -27,7 +27,7 @@
 \texttt{sudo iptables --append INPUT --protocol icmp --icmp-type echo-request --jump DROP}
 
 Состояние iptables цепочек после выполнение предыдущей команды
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     user@ubuntu$ sudo iptables --list --numeric --verbose --line-numbers
     num   pkts bytes target     prot opt in   out   source    destination
     1        6   504 DROP       icmp --  *    *     0.0.0.0/0 0.0.0.0/0    icmptype 8
@@ -41,7 +41,7 @@
 \end{Verbatim}
 
 Запрос извне
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ ping 192.168.124.45
     PING 192.168.124.45 (192.168.124.45) 56(84) bytes of data.
     ^C
@@ -50,7 +50,7 @@
 \end{Verbatim}
 
 Локальный запрос так же отсеян, т.к. запросы обрабатываются общей цепочкой
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     user@ubuntu$ ping localhost 
     PING localhost (127.0.0.1) 56(84) bytes of data.
     ^C
@@ -62,7 +62,7 @@
 \texttt{sudo iptables --insert INPUT --in-interface lo --jump ACCEPT}
 
 Состояние правил
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     user@ubuntu$ sudo iptables --list --numeric --verbose --line-numbers
     Chain INPUT (policy ACCEPT 0 packets, 0 bytes)
     num   pkts bytes target   prot opt in   out  source     destination
@@ -79,7 +79,7 @@
 Важно отметить, что разрешение для localhost было добавлено перед запрещающим правилом.
 
 После этого локальный запрос начинает работать
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     user@ubuntu$ ping localhost 
     PING localhost (127.0.0.1) 56(84) bytes of data.
     ^C
@@ -103,7 +103,7 @@
 \texttt{sudo iptables --insert OUTPUT --protocol icmp --icmp-type 0 --source 192.168.124.45 --destination 0/0 --match state --state ESTABLISHED,RELATED --jump ACCEPT}
 
 Состояние цепочек правил
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     user@ubuntu$ sudo iptables --list --numeric --verbose --line-numbers
     Chain INPUT (policy DROP 74 packets, 19555 bytes)
     num   pkts bytes target   prot opt in   out   source           destination
@@ -118,7 +118,7 @@
 \end{Verbatim}
 
 В результате, хост отвечает на ping
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ ping 192.168.124.45
     PING 192.168.124.45 (192.168.124.45) 56(84) bytes of data.
     64 bytes from 192.168.124.45: icmp_seq=1 ttl=64 time=0.197 ms
@@ -148,7 +148,7 @@
 \texttt{sudo iptables --policy INPUT DROP}
 
 Состояние цепочек правил
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     user@ubuntu$ sudo iptables --list --numeric --verbose --line-numbers
     Chain INPUT (policy DROP 0 packets, 0 bytes)
     num   pkts bytes target     prot opt in     out   source       destination
@@ -161,7 +161,7 @@
 \end{Verbatim}
 
 Клиент отправляет запросы каждую 1/10 секунды, в итоге много потерь.
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ ping 192.168.124.45 -i 0.1
     PING 192.168.124.45 (192.168.124.45) 56(84) bytes of data.
     64 bytes from 192.168.124.45: icmp_seq=84 ttl=64 time=0.194 ms
@@ -187,7 +187,7 @@
 \texttt{sudo iptables --append INPUT --source 192.168.124.62 --jump DROP}
 
 Состояние цепочек правил
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     user@ubuntu$ sudo iptables --list --numeric --verbose --line-numbers
     Chain INPUT (policy ACCEPT 1229 packets, 231K bytes)
     num   pkts bytes target     prot opt in   out  source           destination
@@ -201,7 +201,7 @@
 \end{Verbatim}
 
 Ping с \texttt{192.168.124.62} на \texttt{192.168.124.45} не проходит.
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ ping 192.168.124.45 -i 0.1
     PING 192.168.124.45 (192.168.124.45) 56(84) bytes of data.
     64 bytes from 192.168.124.45: icmp_seq=84 ttl=64 time=0.194 ms
@@ -222,7 +222,7 @@ Ping с \texttt{192.168.124.62} на \texttt{192.168.124.45} не проходи
 \texttt{sudo iptables --append INPUT --protocol tcp --dport 80 --jump DROP}
 
 Состояние цепочек правил
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     user@ubuntu$ sudo iptables --list --numeric --verbose --line-numbers
     Chain INPUT (policy ACCEPT 0 packets, 0 bytes)
     num   pkts bytes target     prot opt in   out   source      destination
@@ -236,12 +236,12 @@ Ping с \texttt{192.168.124.62} на \texttt{192.168.124.45} не проходи
 \end{Verbatim}
 
 На сервере запускаем Netcat на 80-ом порту.
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     user@ubuntu$ sudo nc -l 80
 \end{Verbatim}
 
 С клиента проходит ping
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ ping 192.168.124.45
     PING 192.168.124.45 (192.168.124.45) 56(84) bytes of data.
     64 bytes from 192.168.124.45: icmp_seq=1 ttl=64 time=0.214 ms
@@ -255,7 +255,7 @@ Ping с \texttt{192.168.124.62} на \texttt{192.168.124.45} не проходи
 \end{Verbatim}
 
 Но подключиться на 80-й порт не получится
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ nc 192.168.124.45 80
 \end{Verbatim}
 
@@ -287,7 +287,7 @@ Ping с \texttt{192.168.124.62} на \texttt{192.168.124.45} не проходи
 \texttt{sudo iptables --append INPUT  --protocol tcp --destination-port 22 --match mac --mac-source 00:0F:EA:91:04:08 --j ACCEPT}
 
 Состояние цепочек правил
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     user@ubuntu$ sudo iptables --list --numeric --verbose --line-numbers
     Chain INPUT (policy DROP 2 packets, 208 bytes)
     num   pkts bytes target     prot opt in     out  source      destination
@@ -301,7 +301,7 @@ Ping с \texttt{192.168.124.62} на \texttt{192.168.124.45} не проходи
 \end{Verbatim}
 
 Ping с клиента не проходит
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ ping 192.168.124.45
     PING 192.168.124.45 (192.168.124.45) 56(84) bytes of data.
     ^C
@@ -310,7 +310,7 @@ Ping с клиента не проходит
 \end{Verbatim}
 
 А SSH соединение работает
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ ssh user@192.168.124.45 -v
     OpenSSH_9.2p1, OpenSSL 3.0.8 7 Feb 2023
     debug1: Reading configuration data /home/smart/.ssh/config

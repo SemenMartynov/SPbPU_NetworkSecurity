@@ -7,7 +7,7 @@
 \addcontentsline{toc}{section}{1. Экспорт открытого ключа}
 
 Экспорт открытого ключа в текстовый файл
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ gpg2 \
      --armor \
      --export 9DAF94FCD9CA38BFD298BD0CA0B01E0BAB2AF7C6 > mykey.asc
@@ -20,7 +20,7 @@
 \addcontentsline{toc}{section}{2. Создание электронной цифровой подписи (ЭЦП) файла}
 
 Отсоединённая ЭЦП файла \texttt{mydocument.pdf} в текстовом формате (команда требует ввода ключевой фразы)
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ gpg2 \
      --sign \
      --detach-sign \
@@ -33,7 +33,7 @@
 
 Отсоединённая подпись в двоичном формате
 
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ gpg2 \
      --sign \
      --detach-sign \
@@ -45,7 +45,7 @@
 
 Встроенная в файл подпись в текстовом формате
 
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ gpg2 \
      --sign \
      --default-key 9DAF94FCD9CA38BFD298BD0CA0B01E0BAB2AF7C6 \
@@ -56,7 +56,7 @@
 
 Встроенная в файл подпись в двоичном формате
 
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ gpg2 \
      --sign \
      --default-key 9DAF94FCD9CA38BFD298BD0CA0B01E0BAB2AF7C6 \
@@ -70,12 +70,12 @@
 
 Возьмём файл цифровой подписи GnuPG проекта файлового шифровальщика VeraCrypt.
 
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ wget https://www.idrix.fr/VeraCrypt/VeraCrypt_PGP_public_key.asc
 \end{Verbatim}
 
 Перед импортом, можно удостовериться, что цифровая подпись содержит правильный ID.
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ gpg --show-keys VeraCrypt_PGP_public_key.asc
     pub   rsa4096 2018-09-11 [SC]
         5069A233D55A0EEB174A5FC3821ACD02680D16DE
@@ -85,7 +85,7 @@
 \end{Verbatim}
 
 После этого можно импортировать файл
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ gpg --import VeraCrypt_PGP_public_key.asc 
     gpg: key 821ACD02680D16DE: 1 signature not checked due to a missing key
     gpg: key 821ACD02680D16DE: public key "VeraCrypt Team (2018 - Supersedes Key ID=0x54DDD393) <veracrypt@idrix.fr>" imported
@@ -102,13 +102,13 @@
 \addcontentsline{toc}{section}{4. Проверка ЭЦП}
 
 Для проверки, возьмём архив с исходными кодами и отсоединённую подпись в двоичном формате
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ wget https://launchpad.net/veracrypt/trunk/1.25.9/+download/VeraCrypt_1.25.9_Source.tar.bz2
     smart@thinkpad$ wget https://launchpad.net/veracrypt/trunk/1.25.9/+download/VeraCrypt_1.25.9_Source.tar.bz2.sig
 \end{Verbatim}
 
 Теперь всё готово для проверки.
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ gpg --verify VeraCrypt_1.25.9_Source.tar.bz2.sig VeraCrypt_1.25.9_Source.tar.bz2
     gpg: Signature made Sun 20 Feb 2022 04:18:32 PM MSK
     gpg:                using RSA key 5069A233D55A0EEB174A5FC3821ACD02680D16DE
@@ -126,13 +126,13 @@
 \addcontentsline{toc}{section}{5. Экспорт/импорт на ключевые сервера}
 
 Экспорт своего ключа
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ gpg --keyserver hkp://keyserver.ubuntu.com --send-key 9DAF94FCD9CA38BFD298BD0CA0B01E0BAB2AF7C6
     gpg: sending key A0B01E0BAB2AF7C6 to hkp://keyserver.ubuntu.com
 \end{Verbatim}
 
 Теперь воспользуемся поиском, для обнаружения этого ключа на удалённом сервере
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ gpg --keyserver hkp://keyserver.ubuntu.com --search-keys martynov.sa@edu.spbstu.ru
     gpg: data source: http://162.213.33.9:11371
     (1)	Semen Martynov (Test digital sirnature) <martynov.sa@edu.spbstu.ru>
@@ -149,7 +149,7 @@
 \end{Verbatim}
 
 Так же легко можно импортировать ключи с удалённого сервера
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ gpg --keyserver pgp.mit.edu --recv-keys DAD95197
     gpg: key FBF1FC87DAD95197: public key "Ashish Aniyan <aaniyan@verimatrix.com>" imported
     gpg: Total number processed: 1
@@ -157,7 +157,7 @@
 \end{Verbatim}
 
 Для интеграции GPG заработал в почтовом клиенте \texttt{Mutt}, нужно в конфигурационный файл \texttt{~/.muttrc дописать}
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     set crypt_use_gpgme=yes
     set crypt_autosign=yes
     set crypt_replyencrypt=yes

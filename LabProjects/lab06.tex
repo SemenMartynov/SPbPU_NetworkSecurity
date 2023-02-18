@@ -7,7 +7,7 @@
 \addcontentsline{toc}{section}{1. Установка}
 
 Для использования сканера, необходимо произвести установку соответствующего пакета.
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ sudo pacman -S nmap
     [sudo] password for smart: 
     resolving dependencies...
@@ -45,7 +45,7 @@
 
 Выполним сканирование локального сегмента сети с параметрами по умолчанию (иначе, такой вид сканирования называют "наивным").
 
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ nmap 192.168.124.0/24
     Starting Nmap 7.93 ( https://nmap.org ) at 2023-02-13 16:02 MSK
     Nmap scan report for 192.168.124.1
@@ -121,7 +121,7 @@
 \addcontentsline{toc}{subsection}{2.2. Обнаружение компьютера методом ping}
 
 Самым простым является метод обнаружения работающих компьютеров с помощью ping
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ nmap -sP 192.168.124.0/24
     Starting Nmap 7.93 ( https://nmap.org ) at 2023-02-13 16:20 MSK
     Nmap scan report for 192.168.124.1
@@ -150,7 +150,7 @@
 
 Для использования флага \texttt{-PU} (UDP ping) требуется root-доступ, т.к. требуется доступ к сырому ответу с канального уровня.
 
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ sudo nmap -PS80 -PU -PA -PY 192.168.124.0/24
     [sudo] password for smart: 
     Starting Nmap 7.93 ( https://nmap.org ) at 2023-02-13 16:27 MSK
@@ -231,7 +231,7 @@
 Ранее мы использовали простой ICMP-запрос, но такой трафик может быть заблокирован. У сетевого сканера Nmap есть другие возможности определения хоста при помощи ICMP.
 
 
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ sudo nmap -PE -PP -PM 192.168.124.0/24
     Starting Nmap 7.93 ( https://nmap.org ) at 2023-02-13 16:49 MSK
     Nmap scan report for 192.168.124.1
@@ -275,7 +275,7 @@
 
 Наиболее распространенный метод, который используется по умолчанию, — это сканирование TCP SYN. Этот подход позволяет сканировать несколько сотен портов в секунду, скрывая при этом сканирующий компьютер, поскольку никогда не завершает TCP-соединение.
 
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ sudo nmap -sS 192.168.124.0/24
     Starting Nmap 7.93 ( https://nmap.org ) at 2023-02-13 17:03 MSK
     Nmap scan report for 192.168.124.1
@@ -345,7 +345,7 @@
 
 Метод, основанный на установлении соединения с помощью системной функции \texttt{connect()}, которую применяет большинство приложений.
 
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ nmap -sT 192.168.124.0/24
     Starting Nmap 7.93 ( https://nmap.org ) at 2023-02-13 17:03 MSK
     Nmap scan report for 192.168.124.1
@@ -403,7 +403,7 @@
 
 Наиболее распространенные сервисы, использующие UDP-протокол это DNS, SNMP и DHCP.
 
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ sudo nmap -sU -sV 192.168.124.1
     [sudo] password for smart: 
     Starting Nmap 7.93 ( https://nmap.org ) at 2023-02-13 17:28 MSK
@@ -463,7 +463,7 @@
 
 Прерывания последовательности соединения можно также получить информацию о закрытых и открытых портах исследуемого хоста.
 
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ sudo nmap -sF 192.168.124.1
     Starting Nmap 7.93 ( https://nmap.org ) at 2023-02-13 17:26 MSK
     Nmap scan report for 192.168.124.1
@@ -507,7 +507,7 @@
 
 Для определения, какие порты на компьютере находятся в статусе \texttt{filtered}, а какие в \texttt{unfiltered}, существует отдельно вынесенный тип сканирования.
 
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ sudo nmap -sA 192.168.124.1
     Starting Nmap 7.93 ( https://nmap.org ) at 2023-02-13 18:28 MSK
     Nmap scan report for 192.168.124.1
@@ -521,7 +521,7 @@
 
 Многие фаерволы выполняют проверку только \texttt{SYN}-пакетов на определенном порту, осуществляя тем самым фильтрацию, с помощью отсылки пакетов с флагом \texttt{ACK} можно определить, существует ли на удалённом компьютере брандмауэр или нет. Пакет с флагом \texttt{ACK} в этом случае отсылается не как часть соединения, а отдельно. В случае если принимающая сторона отсылает обратный пакет с флагом \texttt{RST} (соответственно порт не блокируется брандмауэром), порт помечается как \texttt{unfiltered}, если же хост не отвечает на пакет, то на нем установлен брандмауэр и порт находится в статусе \texttt{filtered}.
 
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ sudo nmap -sW 192.168.124.1
     Starting Nmap 7.93 ( https://nmap.org ) at 2023-02-13 18:29 MSK
     Nmap scan report for 192.168.124.1
@@ -544,7 +544,7 @@
 
 Механика метода сходна с \texttt{FIN}, \texttt{Xmas} и \texttt{Null}, но отправляются пакеты с флагами \texttt{FIN/ACK}. Если порт закрыт, хост должен отвечать пакетом \texttt{RST}.
 
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ sudo nmap -sM 192.168.124.1
     Starting Nmap 7.93 ( https://nmap.org ) at 2023-02-13 18:48 MSK
     Nmap scan report for 192.168.124.1
@@ -564,7 +564,7 @@
 Метод idlescan по своему алгоритму работы практически идентичен SYN-сканированию, но пытается скрыть IP-адрес хоста, с которого производится исследование.
 
 Попытка просканировать хост 192.168.124.1 выдавая себя за хост 192.168.124.96.
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ sudo nmap -sI 192.168.124.96 192.168.124.1
     WARNING: Many people use -Pn w/Idlescan to prevent pings from their true IP.  On the other hand, timing info Nmap gains from pings can allow for faster, more reliable scans.
     Starting Nmap 7.93 ( https://nmap.org ) at 2023-02-13 18:56 MSK
@@ -582,7 +582,7 @@
 
 Для определения доступности протокола на хосте Nmap посылает несколько пакетов с пустыми заголовками, содержащими в поле protocol только номер протокола. В случае, если протокол недоступен, компьютер вернет ICMP-сообщение «protocol unreachable». Если в ответ хост не посылает пакетов -- это может означать, что либо протокол доступен, либо брандмауэр блокирует ICMP-трафик.
 
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ sudo nmap -sO 192.168.124.1
     Starting Nmap 7.93 ( https://nmap.org ) at 2023-02-13 18:58 MSK
     Nmap scan report for 192.168.124.1
@@ -612,7 +612,7 @@
 
 В нашей сети нет FTP-сервера, но мы просто упоминаем эту возможность как опцию для сканирования.
 
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ sudo nmap -b <username:password@server:port> 192.168.124.1
 \end{Verbatim}
 
@@ -626,7 +626,7 @@ Nmap с большой степенью вероятности позволяе�
 
 Сканер Nmap собирает "отпечатки пальцев" (fingerprints) различных хостов и запущенных там сервисов. Сравнивая полученные результаты с эталонными значениями, указанными в файле Nmap-os-fingerprints, программа выдает сводный результат по компьютеру.
 
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ sudo nmap -O -A 192.168.124.96
     Starting Nmap 7.93 ( https://nmap.org ) at 2023-02-13 19:24 MSK
     Nmap scan report for 192.168.124.96
@@ -664,7 +664,7 @@ Nmap с большой степенью вероятности позволяе�
     Nmap done: 1 IP address (1 host up) scanned in 108.58 seconds
 \end{Verbatim}
 
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ sudo nmap -A -O 192.168.124.132
     Starting Nmap 7.93 ( https://nmap.org ) at 2023-02-13 19:25 MSK
     Nmap scan report for 192.168.124.132

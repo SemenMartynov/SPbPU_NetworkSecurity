@@ -7,7 +7,7 @@
 \addcontentsline{toc}{section}{1. Установка}
 
 Для использования \texttt{wireshark} в графическом режиме, потребуется пакет \texttt{wireshark-qt}.
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ sudo pacman -S wireshark-qt
     resolving dependencies...
     looking for conflicting packages...
@@ -71,7 +71,7 @@
 
 Генерация трафика:
 Для использования \texttt{wireshark} в графическом режиме, потребуется пакет \texttt{wireshark-qt}.
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ ping 192.168.124.1
 \end{Verbatim}
 
@@ -399,7 +399,7 @@
 Протокол разрешения адресов (\texttt{Address Resolution Protocol}, \texttt{ARP}) используется в компьютерных сетях для сопоставления \texttt{IP}-адресов и \texttt{MAC}-адресов в рамках одного широковещательного домена. Механизм сопоставления называют "\texttt{ARP}-таблицами" и этот механизм подвержен различными атакам (типа переполнения размерности) для встраивания в цепочку передачи (\texttt{Man-in-the-middle}).
 
 Отображение \texttt{ARP}-таблицы на беспроводном интерфейсе
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ ip neigh show dev wlp3s0
     192.168.124.1 lladdr 34:ce:00:37:d9:03 REACHABLE 
     fe80::36ce:ff:fe37:d903 lladdr 34:ce:00:37:d9:03 router REACHABLE 
@@ -561,7 +561,7 @@
 \addcontentsline{toc}{subsection}{Демонстрация уязвимости}
 
 Осуществим запуск \texttt{vsftd} в docker-контейнере. Имя пользователя \texttt{one}, пароль \texttt{1234}.
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     ubuntu@temp$ docker run -d \
         -p 21:21 \
         -p 21000-21010:21000-21010 \
@@ -581,7 +581,7 @@
 \end{Verbatim}
 
 FTP является устаревшим протоколом, и его поддержка давно удалена из браузеров. По этой причине необходимо явным образом установить FTP-клиент.
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ sudo pacman -S filezilla
     [sudo] password for smart: 
     resolving dependencies...
@@ -616,6 +616,8 @@ FTP является устаревшим протоколом, и его под
     \includegraphics[scale=0.5]{res/5.filezilla-warning.png}
 \end{center}
 
+\newpage
+
 При анализе трафика в \texttt{wireshark}, мы видим что со стороны \texttt{filezilla} была попытка установить соединение с использованием \texttt{TLS} и \texttt{SSL}, и только после этого имя пользователя и пароль были переданы в виде чистого текста.
 \begin{center}
     \includegraphics[scale=0.55]{res/5.wireshark-ftp-plain.png}
@@ -626,7 +628,7 @@ FTP является устаревшим протоколом, и его под
 
 Никакие изменения настроек (смена банеров приветствия, отключение анонимного доступа) \texttt{vsftd} не решит проблему передачи логина и пароля в чистом виде. Необходимо организовать обеспечить шифрование канала, а для этого нужно использовать валидные TLS-сертификаты (воспользуемся службой \texttt{LetsEncrypt}).
 
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     ubuntu@temp$ docker run -it --rm \
         -p 80:80 \
         -v "/etc/letsencrypt:/etc/letsencrypt" \
@@ -675,7 +677,7 @@ FTP является устаревшим протоколом, и его под
 
 Теперь запустим \texttt{vsftd}, используя полученные \texttt{TLS}-сертификаты.
 
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     ubuntu@temp$ docker run -d \
         --name ftp \
         -v /etc/letsencrypt:/etc/letsencrypt:ro \
@@ -707,7 +709,7 @@ FTP является устаревшим протоколом, и его под
 \addcontentsline{toc}{section}{4. Сравнение защиты Telnet и SSH}
 
 Подготовим и запустим \texttt{Telnet} сервер в \texttt{Docker} окружении.
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ docker run -itd -p 23:23 --name=telnetServer flemingcsi/telnet-server
     Unable to find image 'flemingcsi/telnet-server:latest' locally
     latest: Pulling from flemingcsi/telnet-server
@@ -723,7 +725,7 @@ FTP является устаревшим протоколом, и его под
 \end{Verbatim}
 
 Уточняю, какой адрес у запущенного сервиса
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ docker inspect --format={{.NetworkSettings.IPAddress}} telnetServer
     172.17.0.2
 \end{Verbatim}
@@ -732,7 +734,7 @@ FTP является устаревшим протоколом, и его под
 
 При подключении есть какие-то проблемы с кодировкой, но это не важно.
 
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ nc 127.14.0.2 23
     ???? ?????'username
     password

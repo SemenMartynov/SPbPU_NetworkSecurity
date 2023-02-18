@@ -63,7 +63,7 @@
 \end{enumerate}
 
 \textbf{Эксперимент:} Запустив приложение, мы получили следующий вывод:
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ ./socketpair
     p->c:0
     c->p: 1
@@ -107,13 +107,13 @@
 \end{enumerate}
 
 \textbf{Эксперимент:} Запуск сервера:
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ ./echo_server
     Waiting for a connection...
 \end{Verbatim}
 
 Запуск клиента:
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ ./echo_client
     Trying to connect...
     Connected.
@@ -129,7 +129,7 @@
 \end{Verbatim}
 
 После запуска сервера, в директории появляется файл сокета. Инормацию о нём можно получить, к примеру, с помощью утилиты \texttt{ss}.
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
 smart@thinkpad$ ss | grep echo_socket
 u_str ESTAB    0      0               echo_socket 481033            * 481088
 \end{Verbatim}
@@ -158,12 +158,12 @@ u_str ESTAB    0      0               echo_socket 481033            * 481088
 Ещё одной особенность является обработка подключений клиентов в отдельных процессах. После установки соединения, сервер вызывает \texttt{fork()} и работает с каждым клиентом отдельно. Это значит, что каждый клиент получит в ответ только свои сообщения.
 
 \textbf{Эксперимент:} запуск сервера.
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ ./sock_c_i_srv 
 \end{Verbatim}
 
 Запуск первого клиента.
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ ./sock_c_i_clt localhost
     > 1
     1
@@ -175,7 +175,7 @@ u_str ESTAB    0      0               echo_socket 481033            * 481088
 \end{Verbatim}
 
 Запуск второго клиента.
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ ./sock_c_i_clt localhost
     > a
     A
@@ -204,7 +204,7 @@ u_str ESTAB    0      0               echo_socket 481033            * 481088
 {../Tasks/1_Network_application/source_files/echo_server_upd.cpp}
 
 \textbf{Эксперимент:} запуск сервера.
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ ./echo_server_upd 
     Waiting for a connection...
     Connected.
@@ -221,7 +221,7 @@ u_str ESTAB    0      0               echo_socket 481033            * 481088
 \end{Verbatim}
 
 Запуск первого клиента.
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ ./echo_client 
     Trying to connect...
     Connected.
@@ -237,7 +237,7 @@ u_str ESTAB    0      0               echo_socket 481033            * 481088
 \end{Verbatim}
 
 Запуск второго клиента.
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ ./echo_client 
     Trying to connect...
     Connected.

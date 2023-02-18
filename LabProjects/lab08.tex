@@ -8,7 +8,7 @@
 
 Выполним подключение по ssh к удалённому хосту и запросим его IP адрес с помощью утилиты \texttt{ip}.
 
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     user@ubuntu:~$ ip a
     1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
         link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
@@ -38,7 +38,7 @@
     \item \texttt{--line-numbers} -- вывода номеров строк соответствующих позиции правила в цепочке.
 \end{itemize}
 
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     user@ubuntu:~$ sudo iptables --list --numeric --verbose --line-numbers
     Chain INPUT (policy ACCEPT 0 packets, 0 bytes)
     num   pkts bytes target     prot opt in     out   source    destination
@@ -57,7 +57,7 @@
 
 Заблокируем весь входящий трафик, модифицировав таблицу \texttt{INPUT}
 
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     user@ubuntu:~$ sudo iptables --append INPUT --jump DROP
 \end{Verbatim}
 
@@ -65,7 +65,7 @@
 
 Новое соединение так же установить нелья, оно отваливается по таймауту.
 
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ ssh user@192.168.124.45 -vvvv
     OpenSSH_9.2p1, OpenSSL 3.0.8 7 Feb 2023
     debug1: Reading configuration data /home/smart/.ssh/config
@@ -85,7 +85,7 @@
 
 Запросы ping до удалённого хоста не проходят
 
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ ping 192.168.124.45
     PING 192.168.124.45 (192.168.124.45) 56(84) bytes of data.
     ^C
@@ -95,7 +95,7 @@
 
 Сканер Nmap не может обнаружить открыте порты (но видит MAC-адрес сетевого интерфейса)
 
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ sudo nmap -sO 192.168.124.45
     Starting Nmap 7.93 ( https://nmap.org ) at 2023-02-16 12:29 MSK
     Nmap scan report for 192.168.124.45
@@ -108,7 +108,7 @@
 \end{Verbatim}
 
 С удалённого хоста тоже не получается обратиться ко внешней сети
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     user@ubuntu$ ping ya.ru
     ^C
     ~
@@ -120,7 +120,7 @@
 \end{Verbatim}
 
 Теперь посмотрим правила iptables на удалённой машине, и отметим увеличение счётчика заблокированных пакетов.
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     user@ubuntu$ sudo iptables --list --numeric --verbose --line-numbers
     Chain INPUT (policy ACCEPT 0 packets, 0 bytes)
     num   pkts bytes target     prot opt in   out   source      destination
@@ -164,7 +164,7 @@
 \texttt{sudo iptables --append INPUT --protocol udp --dport 443 --jump ACCEPT}
 
 Итоговые правила выглядят следующим образом
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     user@ubuntu$ sudo iptables --list --numeric --verbose --line-numbers
     Chain INPUT (policy DROP 0 packets, 0 bytes)
     num pkts bytes target  prot opt in  out  source     destination
@@ -187,7 +187,7 @@
 Для эмуляции работы WEB-сервера, используем Netcat.
 
 На стороне сервера:
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     user@ubuntu$ sudo nc -l 80
     1
     2
@@ -195,7 +195,7 @@
 \end{Verbatim}
 
 На стороне клиента:
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ nc 192.168.124.45 80
     1
     2

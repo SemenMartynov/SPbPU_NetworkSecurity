@@ -7,7 +7,7 @@
 \addcontentsline{toc}{section}{1. Установка}
 
 Утилита Netcat уже была установлена в рамках предыдущих работ для эмуляции Telnet подключения
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ pacman -Qi netcat
     Name            : gnu-netcat
     Version         : 0.7.1-9
@@ -51,7 +51,7 @@
 Опционально, можно указать \texttt{-t} для TCP соединения (используется по умолчанию) или \texttt{-u} для UDP.
 
 Запуск сервера и общение с клиентом
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ nc -nvlp 1234
     Connection from 127.0.0.1:52880
     Hi from client
@@ -65,14 +65,14 @@
 \end{itemize}
 
 Запуск клиента и общение с сервером
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ nc 127.0.0.1 1234
     Hi from client
     Hi from server
 \end{Verbatim}
 
 Проверка состояние сокета
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ ss -tp | grep nc
     ESTAB 0   0      127.0.0.1:52880          127.0.0.1:search-agent users:(("nc",pid=44033,fd=3))              
     ESTAB 0   0      127.0.0.1:search-agent   127.0.0.1:52880        users:(("nc",pid=43782,fd=4)) 
@@ -82,6 +82,8 @@
 \begin{center}
     \includegraphics[scale=0.55]{res/7.wireshark-nc-chat.png}
 \end{center}
+
+\newpage
 
 Wireshark позволяет полностью отследить всю переписку
 \begin{center}
@@ -101,7 +103,7 @@ Wireshark позволяет полностью отследить всю пер
 Все параметры запуска уже были рассмотрены в предыдущем примере, вывод команды сделан в файл \texttt{file.txt}.
 
 Получение файла
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ nc -nvlp 1234 > file.txt
     Connection from 127.0.0.1:56638
 \end{Verbatim}
@@ -109,7 +111,7 @@ Wireshark позволяет полностью отследить всю пер
 На передающей стороне, делаем такой вызов \texttt{cat file.txt | nc 127.0.0.1 1234}. В некоторых реализациях есть дополнительная опция \texttt{-q 0} для того, что бы netcat автоматически завершил работу сразу после отправки.
 
 Передача файла
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ nc 127.0.0.1 1234 < file.txt
 
 \end{Verbatim}
@@ -122,14 +124,14 @@ Wireshark позволяет полностью отследить всю пер
 Возможным решением может быть добавление счётчика на отправляющий и принимающей стороне.
 
 Получение файла
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ nc -nvlp 1234 | pv -b > file.txt
     Connection from 127.0.0.1:36388
      304 B
 \end{Verbatim}
 
 Передача файла
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ cat file.txt | pv -b | nc 127.0.0.1 1234
     304 B
 \end{Verbatim}
@@ -144,7 +146,7 @@ Wireshark позволяет полностью отследить всю пер
 Другой вариант передачи -- запаковать её в тарбол на одном конце, и распаковать на другом. Кроме прочего, это позволит передать и права, выставленные на файлы.
 
 Получение директории
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ nc -nvlp 1234 | pv -b | tar xf -
     Connection from 127.0.0.1:35942
     39.0MiB
@@ -159,7 +161,7 @@ Wireshark позволяет полностью отследить всю пер
 \end{itemize}
 
 Передача директории
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ tar cf - . | pv -b | nc 127.0.0.1 1234
     39.0MiB
 \end{Verbatim}
@@ -179,14 +181,14 @@ Wireshark позволяет полностью отследить всю пер
 Для экономии трафика, можно сражу сжимать поток любым архиватором. Тема выбора подходящего архиватора для различных типов данных достойна отдельного исследования, мы будем использовать gzip, как оптимальное решение между скоростью работы, качеством сжатия и количеством потребляемых ресурсов. Для этого достаточно передать параметр \texttt{z} утилите tar.
 
 Получение директории со сжатием
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ nc -nvlp 1234 | pv -b | tar xzf -
     Connection from 127.0.0.1:43324
     36.8MiB
 \end{Verbatim}
 
 Передача директории
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ tar czf - . | pv -b | nc 127.0.0.1 1234
     36.8MiB
 \end{Verbatim}
@@ -223,7 +225,7 @@ Wireshark позволяет полностью отследить всю пер
 Повторим эксперимент с созданием чата.
 
 Запуск сервера и общение с клиентом
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ ./cryptcat -nvlp 1234
     listening on [any] 1234 ...
     connect to [127.0.0.1] from (UNKNOWN) [127.0.0.1] 39944
@@ -232,18 +234,20 @@ Wireshark позволяет полностью отследить всю пер
 \end{Verbatim}
 
 Запуск клиента и общение с сервером
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ ./cryptcat 127.0.0.1 1234
     hello from client
     hello from server
 \end{Verbatim}
 
 Проверка состояние сокета
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ ss -tp | grep nc
     ESTAB 0   0      127.0.0.1:39944          127.0.0.1:search-agent users:(("cryptcat",pid=71954,fd=3))
     ESTAB 0   0      127.0.0.1:search-agent   127.0.0.1:39944        users:(("cryptcat",pid=71953,fd=4))
 \end{Verbatim}
+
+\newpage
 
 Пакеты, пойманные Wireshark
 \begin{center}
@@ -261,7 +265,7 @@ Wireshark показывает, что данные переданы в заши
 Передача файлов работает аналогично Netcat, данные зашифрованы.
 
 Получение файла
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ ../cryptcat -nvlp 1234 | pv -b > file.txt
     listening on [any] 1234 ...
     connect to [127.0.0.1] from (UNKNOWN) [127.0.0.1] 54856
@@ -269,7 +273,7 @@ Wireshark показывает, что данные переданы в заши
 \end{Verbatim}
 
 Передача файла
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ cat file.txt | pv -b | ./cryptcat 127.0.0.1 1234
     304 B
 \end{Verbatim}
@@ -281,7 +285,7 @@ Wireshark показывает, что данные переданы в заши
 
 Для начала определим, что должно получиться в итоге. При запросе на 80-й порт, google отвечает 301 и отправляет устанавливать https соединение. Но даже такого ответа нам достаточно для теста.
 
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ curl google.com
     <HTML><HEAD><meta http-equiv="content-type" content="text/html;charset=utf-8">
     <TITLE>301 Moved</TITLE></HEAD><BODY>
@@ -297,7 +301,7 @@ Wireshark показывает, что данные переданы в заши
 После этого, через curl вначале сделаем запрос на порт 1233, потом прочитаем ответ с порта 1234.
 
 Результат работы пайпа
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ nc -lp 1233 | nc google.com 80 | nc -lp 1234
     GET / HTTP/1.1
     Host: 127.0.0.1:1234
@@ -306,7 +310,7 @@ Wireshark показывает, что данные переданы в заши
 \end{Verbatim}
 
 Результат работы curl
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ curl 127.0.0.1:1233
     ^[[A^C
     smart@thinkpad$ curl 127.0.0.1:1234

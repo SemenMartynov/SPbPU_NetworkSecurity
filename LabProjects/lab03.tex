@@ -6,7 +6,7 @@
 \section*{1. Установка}
 \addcontentsline{toc}{section}{1. Установка}
 Установка утилиты не потребовалась, т.к. она уже установлена на компьютере.
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ pacman -Qi gnupg
     Name            : gnupg
     Version         : 2.2.40-1
@@ -37,7 +37,7 @@
 \end{Verbatim}
 
 Информация о текущей версии \texttt{GnuPG} и поддерживаемых криптоалгоритмах
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ gpg2 --version
     gpg (GnuPG) 2.2.40
     libgcrypt 1.10.1-unknown
@@ -60,7 +60,7 @@
 Произведём генерацию ключей.
 
 Для диалога генерации ключа я использую флаг \texttt{--full-generate-key}, т.к. стандартный \texttt{--gen-key} скрывает некоторые вопросы диалога используя значения по умолчанию (в частности, используется ключ длинной 3072).
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ gpg2 --full-generate-key
     gpg (GnuPG) 2.2.40; Copyright (C) 2022 g10 Code GmbH
     This is free software: you are free to change and redistribute it.
@@ -133,7 +133,7 @@
 \end{center}
 
 Текущий список ключей с keygrip (идемпотентный протокол хеширования для связи ключей)
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ gpg --list-keys --with-keygrip
     /home/smart/.gnupg/pubring.kbx
     ------------------------------
@@ -152,7 +152,7 @@
 \end{itemize}
 
 Список приватных ключей
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ gpg2 --list-secret-keys --with-keygrip
     /home/smart/.gnupg/pubring.kbx
     ------------------------------
@@ -171,7 +171,7 @@
 \end{itemize}
 
 Список подписей
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ gpg2 --list-signatures --with-keygrip
     /home/smart/.gnupg/pubring.kbx
     ------------------------------
@@ -186,7 +186,7 @@
 \end{Verbatim}
 
 Отпечаток (fingerprint) подписи
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ gpg2 --fingerprint martynov.sa@edu.spbstu.ru
     pub   rsa4096 2023-02-11 [SC] [expires: 2023-03-04]
           9DAF 94FC D9CA 38BF D298  BD0C A0B0 1E0B AB2A F7C6
@@ -195,7 +195,7 @@
 \end{Verbatim}
 
 Исследуем содержимое директории \texttt{.gnupg}
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
 smart@thinkpad$ tree .gnupg/
 .gnupg/
     openpgp-revocs.d
@@ -225,7 +225,7 @@ smart@thinkpad$ tree .gnupg/
 {../Tasks/3_4_GnuPG_tool_utilisation/source_files/LoremIpsum.txt}
 
 Теперь зашифруем файл с тестовым выводом
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ gpg2 \
      --armor \
      --recipient 9DAF94FCD9CA38BFD298BD0CA0B01E0BAB2AF7C6 \
@@ -236,20 +236,20 @@ smart@thinkpad$ tree .gnupg/
 {../Tasks/3_4_GnuPG_tool_utilisation/source_files/LoremIpsum.txt.asc.nosign}
 
 Далее расшифруем файл (операция потребует ввода приватной фразы!)
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ gpg2 \
      --recipient 9DAF94FCD9CA38BFD298BD0CA0B01E0BAB2AF7C6 \
      --decrypt LoremIpsum.txt.asc > LoremIpsum.decrypted.txt
 \end{Verbatim}
 
 Убедимся, что расшифрованный файл соответствует исходному.
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ shasum -a 1 LoremIpsum.txt LoremIpsum.decrypted.txt 
     014bbacd9d092d1f2272a3419125dbb2de0f3a6b  LoremIpsum.txt
     014bbacd9d092d1f2272a3419125dbb2de0f3a6b  LoremIpsum.decrypted.txt
 \end{Verbatim}
 
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ gpg2 \
      --recipient 9DAF94FCD9CA38BFD298BD0CA0B01E0BAB2AF7C6 \
      --clearsign LoremIpsum.txt
@@ -259,7 +259,7 @@ smart@thinkpad$ tree .gnupg/
 {../Tasks/3_4_GnuPG_tool_utilisation/source_files/LoremIpsum.txt.asc}
 
 Проверка цифровой подписи
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
     smart@thinkpad$ gpg2 --verify LoremIpsum.txt.asc
     gpg: Signature made Sat 11 Feb 2023 07:57:52 PM MSK
     gpg:                using RSA key 9DAF94FCD9CA38BFD298BD0CA0B01E0BAB2AF7C6
@@ -269,7 +269,7 @@ smart@thinkpad$ tree .gnupg/
 \section*{4. Прочие возможности использования GPG}
 \addcontentsline{toc}{section}{4. Прочие возможности использования GPG}
 Популярным способом использования GPG является цифровая подпись коммитов в git. Для этого в \texttt{.gitconfig} нужно добавить следующие параметры
-\begin{Verbatim}[frame=single]
+\begin{Verbatim}[frame=single,breaklines=true,breakanywhere=true]
 [commit]
         gpgsign = true
 [user]
