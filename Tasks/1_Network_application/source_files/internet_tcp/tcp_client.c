@@ -2,7 +2,7 @@
 /*
  * Client - Internet domain, connection-oriented
  */
-#include "local_c_i.h"
+#include "local.h"
 int main(int argc, char *argv[])
 {
   if (argc != 2)
@@ -42,15 +42,15 @@ int main(int argc, char *argv[])
   do
   {
     int len;                        /* Length of server address		   */
-    write(fileno(stdout), "> ", 3); /* Prompt user */
-    if ((len = read(fileno(stdin), buf, BUFSIZ)) > 0)
+    write(STDOUT_FILENO, "> ", 3); /* Prompt user */
+    if ((len = read(STDIN_FILENO, buf, BUFSIZ)) > 0)
     { /* Get input */
       write(orig_sock, buf, len);
       if ((len = read(orig_sock, buf, len)) > 0) /* if returned */
-        write(fileno(stdout), buf, len);         /* display it */
+        write(STDOUT_FILENO, buf, len);         /* display it */
     }
   } while (buf[0] != '.');
 
   close(orig_sock);
   exit(0);
-};
+}

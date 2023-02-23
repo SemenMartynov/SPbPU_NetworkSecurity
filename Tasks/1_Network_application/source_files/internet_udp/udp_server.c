@@ -11,11 +11,9 @@
 #include <sys/un.h>
 #define NAME "my_sock"
 
-void clean_up(int, char *); /* Close socket and remove routine */
-
 int main(void)
 {
-  static char buf[10]; /* Buffer for messages */
+  static char buf[10] = {'\0'}; /* Buffer for messages */
 
   int orig_sock; /* Original socket descriptor */
   if ((orig_sock = socket(AF_UNIX, SOCK_STREAM, 0)) < 0)

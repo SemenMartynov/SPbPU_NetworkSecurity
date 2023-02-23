@@ -15,8 +15,6 @@
 
 int main(void)
 {
-  char str[100];
-
   int mySocket = -1;
   if ((mySocket = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
   {
@@ -42,6 +40,7 @@ int main(void)
     exit(1);
   }
 
+  char str[100] = {'\0'};
   for (;;)
   {
     printf("Waiting for a connection...\n");

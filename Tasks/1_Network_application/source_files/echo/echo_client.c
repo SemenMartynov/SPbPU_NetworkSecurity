@@ -15,8 +15,7 @@
 
 int main(void)
 {
-  char str[100];
-
+  
   int mySocket = -1;
   if ((mySocket = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
   {
@@ -36,6 +35,7 @@ int main(void)
   }
 
   printf("Connected.\n");
+  char str[100] = {'\0'};
   while (printf("> "), fgets(str, 100, stdin), !feof(stdin))
   {
     if (send(mySocket, str, strlen(str), 0) == -1)
