@@ -2,7 +2,7 @@
 /*
  * Server - Internet domain, connection-oriented
  */
-#include "local_c_i.h"
+#include "local.h"
 int main(void)
 {
   int orig_sock; /* Original socket descriptor in server */

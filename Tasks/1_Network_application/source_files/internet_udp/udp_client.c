@@ -13,7 +13,7 @@
 
 int main(void)
 {
-  static char buf[10]; /* Buffer for messages	       */
+  static char buf[10] = {'\0'}; /* Buffer for messages	       */
 
   int orig_sock = -1; /* Original socket descriptor in client */
   if ((orig_sock = socket(AF_UNIX, SOCK_STREAM, 0)) < 0)

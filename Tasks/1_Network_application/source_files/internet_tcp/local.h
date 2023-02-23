@@ -12,4 +12,5 @@
 #include <netdb.h>
 
 #define PORT 6996
+#define h_addr h_addr_list[0] /* for backward compatibility */
 static char buf[BUFSIZ]; /*Buffer for messages*/
