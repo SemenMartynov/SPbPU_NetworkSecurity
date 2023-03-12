@@ -1,0 +1,55 @@
+Opening packet capturing library
+Library opened, version is  pcap libpcap version 1.10.4 (with TPACKET_V3)
+Opening the wlp3s0 interface
+Interface opened, data link: ethernet
+Receiving 5 packets:
+Received packet: [34, ce, 00, 37, d9, 03, 14, 5a, fc, 0d, 56, 2d, 86, dd, 60, 00, 00, 00, 00, 20, 3a, ff, fe, 80, 00, 00, 00, 00, 00, 00, 27, 06, a7, 1b, 9b, ab, 47, a0, fe, 80, 00, 00, 00, 00, 00, 00, 36, ce, 00, ff, fe, 37, d9, 03, 87, 00, 46, 0c, 00, 00, 00, 00, fe, 80, 00, 00, 00, 00, 00, 00, 36, ce, 00, ff, fe, 37, d9, 03, 01, 01, 14, 5a, fc, 0d, 56, 2d]
+[ethernet] destination_address: [34, ce, 0, 37, d9, 3]
+[ethernet] source_address: [14, 5a, fc, d, 56, 2d]
+[ethernet] ethertype: 0x86dd
+[ipv6] source_address: [fe, 80, 0, 0, 0, 0, 0, 0, 27, 6, a7, 1b, 9b, ab, 47, a0]
+[ipv6] destination_address: [fe, 80, 0, 0, 0, 0, 0, 0, 36, ce, 0, ff, fe, 37, d9, 3]
+[ipv6] protocol: 0x3a
+[ICMP] Message code: 0x00
+[ICMP] Message type : 0x87
+[ICMP] Checksum: 460c
+Received packet: [14, 5a, fc, 0d, 56, 2d, 34, ce, 00, 37, d9, 03, 86, dd, 60, 00, 00, 00, 00, 18, 3a, ff, fe, 80, 00, 00, 00, 00, 00, 00, 36, ce, 00, ff, fe, 37, d9, 03, fe, 80, 00, 00, 00, 00, 00, 00, 27, 06, a7, 1b, 9b, ab, 47, a0, 88, 00, ec, a9, c0, 00, 00, 00, fe, 80, 00, 00, 00, 00, 00, 00, 36, ce, 00, ff, fe, 37, d9, 03]
+[ethernet] destination_address: [14, 5a, fc, d, 56, 2d]
+[ethernet] source_address: [34, ce, 0, 37, d9, 3]
+[ethernet] ethertype: 0x86dd
+[ipv6] source_address: [fe, 80, 0, 0, 0, 0, 0, 0, 36, ce, 0, ff, fe, 37, d9, 3]
+[ipv6] destination_address: [fe, 80, 0, 0, 0, 0, 0, 0, 27, 6, a7, 1b, 9b, ab, 47, a0]
+[ipv6] protocol: 0x3a
+[ICMP] Message code: 0x00
+[ICMP] Message type : 0x88
+[ICMP] Checksum: eca9
+Received packet: [34, ce, 00, 37, d9, 03, 14, 5a, fc, 0d, 56, 2d, 08, 00, 45, 00, 00, 28, e1, cc, 40, 00, 40, 06, 32, f9, c0, a8, 7c, 3e, 14, b9, d4, 6a, a7, 34, 01, bb, a4, 9c, c7, 08, 0d, 19, bc, 06, 50, 10, 04, f3, a7, 22, 00, 00]
+[ethernet] destination_address: [34, ce, 0, 37, d9, 3]
+[ethernet] source_address: [14, 5a, fc, d, 56, 2d]
+[ethernet] ethertype: 0x0800
+[ipv4] source_address: [c0, a8, 7c, 3e]
+[ipv4] destination_address: [14, b9, d4, 6a]
+[ipv4] protocol: 0x06
+[TCP] Source port: a734
+[TCP] Destination port : 1bb
+[TCP] Sequence number: a49cc708
+Received packet: [14, 5a, fc, 0d, 56, 2d, 34, ce, 00, 37, d9, 03, 08, 00, 45, b8, 00, 28, 09, ab, 40, 00, 6e, 06, dc, 62, 14, b9, d4, 6a, c0, a8, 7c, 3e, 01, bb, a7, 34, 0d, 19, bc, 06, a4, 9c, c7, 09, 50, 10, 40, 02, 6c, 12, 00, 00]
+[ethernet] destination_address: [14, 5a, fc, d, 56, 2d]
+[ethernet] source_address: [34, ce, 0, 37, d9, 3]
+[ethernet] ethertype: 0x0800
+[ipv4] source_address: [14, b9, d4, 6a]
+[ipv4] destination_address: [c0, a8, 7c, 3e]
+[ipv4] protocol: 0x06
+[TCP] Source port: 1bb
+[TCP] Destination port : a734
+[TCP] Sequence number: d19bc06
+Received packet: [34, ce, 00, 37, d9, 03, 14, 5a, fc, 0d, 56, 2d, 08, 00, 45, 00, 00, ed, da, a6, 40, 00, 40, 06, e5, b0, c0, a8, 7c, 3e, 95, 9a, a7, 32, 9d, 52, 01, bb, fd, d6, c4, e6, 3c, b4, 99, 3a, 80, 18, 0c, 0e, 53, 79, 00, 00, 01, 01, 08, 0a, 5f, 5f, 03, e3, 2a, e1, 80, a6, e1, 99, c3, 6e, c9, 98, fe, 6a, 2f, ce, 80, 5b, dd, 94, cf, 6f, e4, 46, 50, 98, 24, b9, 28, 48, 2b, a6, ab, 40, e0, 92, f4, d9, 86, eb, b4, b9, 6d, bd, 18, 28, 40, fa, 46, e2, 20, ef, 09, 54, b9, c0, cd, 54, 98, cf, c0, f9, 35, e5, 84, a1, f2, 7e, 9c, 27, 92, 9b, a3, 81, e4, 9d, 51, cb, 5d, 1a, b8, e7, d2, 1f, 0a, bf, 19, d9, c1, 90, d6, db, 38, 9a, b2, 58, 28, 88, 61, cb, 48, e0, da, f6, 84, 68, 92, 03, 6f, 09, 25, 6c, 89, f9, b7, 5a, a0, 55, a2, 5c, fe, eb, 36, 22, da, 8e, ea, 7d, e2, e4, 3b, 7c, 02, dc, d5, a4, cd, 88, f4, 2b, 82, 82, a2, 11, a7, 16, f0, ea, 41, 7d, b1, 15, 91, 1f, 6c, fb, d6, a1, cf, 91, 8f, be, 14, b9, bb, d0, 56, 3d, 9c, 34, 83, 2b, 8e, 70, bf, fd, b4, 5a, 34, e3, 11, d0, 5b, a9, 1e, e6, f4, e2, 78, 66, d9]
+[ethernet] destination_address: [34, ce, 0, 37, d9, 3]
+[ethernet] source_address: [14, 5a, fc, d, 56, 2d]
+[ethernet] ethertype: 0x0800
+[ipv4] source_address: [c0, a8, 7c, 3e]
+[ipv4] destination_address: [95, 9a, a7, 32]
+[ipv4] protocol: 0x06
+[TCP] Source port: 9d52
+[TCP] Destination port : 1bb
+[TCP] Sequence number: fdd6c4e6
