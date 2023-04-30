@@ -1,0 +1,64 @@
+<!--
+This code creates a simple real-time messaging app using HTML, CSS, and JavaScript. It allows users to send and receive messages.
+
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>Message App</title>
+</head>
+
+<body>
+  <!-- Create a form for sending messages -->
+  <form id="publish-form">
+    <input type="text" id="message-input" maxlength="50" /> <!-- input field to type messages -->
+    <input type="submit" value="Send" /> <!-- send button -->
+  </form>
+
+  <!-- Create a div to display messages -->
+  <div id="messages"></div>
+
+  <script>
+    // Set WebSocket URL
+    const wsUrl = 'ws://localhost:8080/ws';
+    // Create WebSocket connection
+    const ws = new WebSocket(wsUrl);
+
+    // Get HTML elements
+    const form = document.getElementById('publish-form');
+    const inputField = document.getElementById('message-input');
+    const msgDiv = document.getElementById('messages');
+
+    // Add event listener to send messages upon form submission
+    form.addEventListener('submit',  (event) => {
+      event.preventDefault();
+      const msgToSend = inputField.value;
+
+      ws.send(msgToSend);
+    });
+
+    // Add event listener to listen for incoming messages
+    ws.addEventListener('message', async (event) => {
+      const msgReceived = await new Response(event.data).text()
+      displayMessage(msgReceived);
+    });
+
+    // Add event listener to listen for WebSocket closing
+    ws.addEventListener('close', (event) => {
+      console.log(`Closed ${event.code}`);
+    });
+
+    // Function to display messages in the div#messages
+    function displayMessage(message) {
+      const msgElement = document.createElement('div');
+      msgElement.textContent = message;
+      console.log(message);
+      msgDiv.prepend(msgElement);
+    }
+  </script>
+</body>
+
+</html>

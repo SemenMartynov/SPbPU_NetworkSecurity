@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Speed Test | Koyeb</title>
+    <style>
+        :root {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+                Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans",
+                "Helvetica Neue", sans-serif;
+            font-size: 14px;
+        }
+
+        .container {
+            max-width: 500px;
+            width: 100%;
+            height: 70vh;
+            margin: 15vh auto;
+        }
+
+        #log {
+            width: calc(100% - 24px);
+            height: 20em;
+            overflow: auto;
+            margin: 0.5em 0;
+            padding: 12px;
+            border: 1px solid black;
+            border-radius: 12px;
+            font-family: monospace;
+            background-color: black;
+        }
+
+        #title {
+            float: left;
+            margin: 12px 0;
+        }
+
+        #start {
+            float: right;
+            margin: 12px 0;
+            background-color: black;
+            color: white;
+            font-size: 18px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: none;
+        }
+
+        #start:disabled,
+        #start[disabled] {
+            background-color: rgb(63, 63, 63);
+            color: lightgray;
+        }
+
+        .msg {
+            margin: 0;
+            padding: 0.25em 0.5em;
+            color: white;
+        }
+
+        .msg--bad {
+            color: lightcoral;
+        }
+
+        .msg--success,
+        .msg--good {
+            color: lightgreen;
+        }
+    </style>
+
+<body>
+    <div class="container">
+        <header>
+            <h1 id="title">Speed Test</h1>
+            <button id="start">start</button>
+        </header>
+        <div id="log"></div>
+    </div>
+    <script>
+        // Anonymous function that runs on page load
+        (function () {
+            // Select DOM elements
+            const startButton = document.querySelector("#start");
+            const logElement = document.querySelector("#log");
+
+            // Calculate the average of an array
+            const average = (array) => array.reduce((a, b) => a + b) / array.length;
+            const totalTests = 10;
+            let startTime, endTime, testResults = [];
+            let socket = null;
+
+            // Log messages to the log element
+            function log(msg, type = "status") {
+                logElement.innerHTML += `<p class="msg msg--${type}">${msg}</p>`;
+                logElement.scrollTop += 1000;
+            }
+
+            // Start the test by creating a WebSocket connection
+            function start() {
+                complete();
+
+                const wsUri = (location.protocol.startsWith("https") ? "wss" : "ws") + "://" + location.host + "/ws";
+                let testsRun = 0;
+
+                log("Starting...");
+                socket = new WebSocket(wsUri);
+
+                socket.onopen = () => {
+                    log("Started.");
+                    updateTestStatus();
+                    testsRun++;
+                    startTime = performance.now();
+                    socket.send("start");
+                };
+
+                socket.onmessage = (ev) => {
+                    endTime = performance.now();
+                    log(`Completed Test: ${testsRun}/${totalTests}. Took ${endTime - startTime} milliseconds.`);
+                    testResults.push(endTime - startTime);
+
+                    if (testsRun < totalTests) {
+                        testsRun++;
+                        startTime = performance.now();
+                        socket.send("start");
+                    } else complete();
+                };
+
+                socket.onclose = () => {
+                    log("Finished.", "success");
+                    socket = null;
+                    updateTestStatus();
+                };
+            }
+
+            // Complete the test and cleanup
+            function complete() {
+                if (socket) {
+                    log("Cleaning up...");
+                    socket.close();
+                    socket = null;
+
+                    const testAverage = average(testResults) / 1000;
+                    const mbps = 10 / testAverage;
+                    const status = mbps < 10 ? "bad" : mbps < 50 ? "" : "good";
+
+                    log(`Average speed: ${mbps.toFixed(2)} MB/s or ${(mbps * 8).toFixed(2)} Mbps`, status);
+                    updateTestStatus();
+                }
+            }
+
+            // Update the button status based on test state
+            function updateTestStatus() {
+                if (socket) {
+                    startButton.disabled = true;
+                    startButton.innerHTML = "Running";
+                } else {
+                    startButton.disabled = false;
+                    startButton.textContent = "Start";
+                }
+            }
+
+            // Handle button click
+            startButton.addEventListener("click", () => {
+                if (socket) complete();
+                else start();
+                updateTestStatus();
+            });
+
+            // Initialize the test status
+            updateTestStatus();
+            log('Click "Start" to begin.');
+        })();
+    </script>
+</body>
+
+</html>
